@@ -12,9 +12,9 @@ export default function LoginPage() {
 
   const handleLogin = (e) => {
     e.preventDefault()
-    if (user === ADMIN_USER && pass === ADMIN_PASS) {
+    if (user.trim() === ADMIN_USER && pass.trim() === ADMIN_PASS) {
       localStorage.setItem('adminAuth', '1')
-      navigate('/admin')
+      window.location.href = '/admin'
     } else {
       setError(true)
       setTimeout(() => setError(false), 2500)
