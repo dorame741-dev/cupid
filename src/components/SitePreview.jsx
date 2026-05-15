@@ -9,7 +9,8 @@ const BG_RED2 = 'radial-gradient(ellipse at 60% 40%, rgba(190,18,60,0.5) 0%, tra
 const BG_BLACK = '#030308'
 
 /* ─── Photo carousel ───────────────────────────────────────── */
-function PhotoCarousel({ photos }) {
+function PhotoCarousel({ photos: rawPhotos }) {
+  const photos = rawPhotos || []
   const [idx, setIdx]         = useState(0)
   const [opacity, setOpacity] = useState(1)
   const autoRef = useRef(null)
