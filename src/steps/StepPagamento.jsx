@@ -302,7 +302,6 @@ export default function StepPagamento({ onNext, onBack }) {
 
   const [wa,         setWa]         = useState('')
   const [selectedQR, setSelectedQR] = useState(0)
-  const [qrOpen,     setQrOpen]     = useState(true)
   const [couponOpen, setCouponOpen] = useState(false)
   const [coupon,     setCoupon]     = useState('')
 
@@ -600,30 +599,25 @@ export default function StepPagamento({ onNext, onBack }) {
 
         {/* QR personalizado */}
         <div className="mt-5 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <button onClick={() => setQrOpen(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3.5">
-            <span className="text-[14px] font-bold text-gray-800 flex items-center gap-2">
-              QR code personalizado ♥
-            </span>
-            {qrOpen ? <ChevronUp size={16} className="text-gray-400"/> : <ChevronDown size={16} className="text-gray-400"/>}
-          </button>
-          {qrOpen && (
-            <div className="pb-4">
-              <div className="flex gap-3 overflow-x-auto px-4 pb-1" style={{scrollbarWidth:'none'}}>
-                {QR_TEMPLATES.map(({ id, Component, label }) => (
-                  <div key={id} className="flex flex-col items-center gap-1.5 shrink-0">
-                    <button onClick={() => setSelectedQR(id)}
-                      style={{outline: selectedQR===id ? '2.5px solid #7c3aed' : '2.5px solid transparent', borderRadius:16, transition:'outline 0.15s'}}>
-                      <Component />
-                    </button>
-                    <span className={`text-[11px] font-bold px-3 py-0.5 rounded-full ${selectedQR===id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                      {label}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          <div className="px-4 pt-3.5 pb-1">
+            <p className="text-[14px] font-bold text-gray-800">QR code personalizado ♥</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">Escolha o estilo do QR que será entregue</p>
+          </div>
+          <div className="pb-4 pt-2">
+            <div className="flex gap-3 overflow-x-auto px-4 pb-1" style={{scrollbarWidth:'none'}}>
+              {QR_TEMPLATES.map(({ id, Component, label }) => (
+                <div key={id} className="flex flex-col items-center gap-1.5 shrink-0">
+                  <button onClick={() => setSelectedQR(id)}
+                    style={{outline: selectedQR===id ? '2.5px solid #7c3aed' : '2.5px solid transparent', borderRadius:16, transition:'outline 0.15s'}}>
+                    <Component />
+                  </button>
+                  <span className={`text-[11px] font-bold px-3 py-0.5 rounded-full ${selectedQR===id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                    {label}
+                  </span>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
         </div>
 
         {/* CTA */}
