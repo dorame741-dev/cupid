@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const supabase = supabaseUrl ? createClient(supabaseUrl, supabaseKey) : null
 
 export async function uploadPhoto(file, folder = 'photos') {
+  if (!supabase) throw new Error('Supabase não configurado')
   const ext = file.name?.split('.').pop() || 'jpg'
   const name = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
   const { data, error } = await supabase.storage.from('site-photos').upload(name, file)
@@ -27,6 +28,7 @@ export async function uploadFromPreview(preview, folder = 'photos') {
 
 // Upsert site data — always with paid: false initially
 export async function saveSite(phone, quizData) {
+  if (!supabase) throw new Error('Supabase não configurado')
   const { data, error } = await supabase
     .from('sites')
     .upsert({ phone, quiz_data: quizData, paid: false }, { onConflict: 'phone' })
@@ -38,6 +40,7 @@ export async function saveSite(phone, quizData) {
 
 // Mark a site as paid
 export async function markPaid(phone) {
+  if (!supabase) throw new Error('Supabase não configurado')
   const { error } = await supabase
     .from('sites')
     .update({ paid: true, paid_at: new Date().toISOString() })
@@ -47,6 +50,7 @@ export async function markPaid(phone) {
 
 // Get a single site by phone
 export async function getSite(phone) {
+  if (!supabase) throw new Error('Supabase não configurado')
   const { data, error } = await supabase
     .from('sites')
     .select('*')
@@ -58,6 +62,7 @@ export async function getSite(phone) {
 
 // Get all sites (admin only)
 export async function getAllSites() {
+  if (!supabase) throw new Error('Supabase não configurado')
   const { data, error } = await supabase
     .from('sites')
     .select('*')
