@@ -77,18 +77,6 @@ function ReviewCarousel() {
         <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, fontStyle: 'italic' }}>"{r.text}"</p>
       </div>
 
-      {/* dots */}
-      <div style={{ display: 'flex', gap: 6 }}>
-        {REVIEWS.map((_, i) => (
-          <button key={i} onClick={() => { setVisible(false); setTimeout(() => { setIdx(i); setVisible(true) }, 300) }}
-            style={{
-              width: i === idx ? 20 : 6, height: 6, borderRadius: 3,
-              border: 'none', cursor: 'pointer', padding: 0,
-              background: i === idx ? '#7c3aed' : '#e5e7eb',
-              transition: 'width 0.3s ease, background 0.3s ease',
-            }} />
-        ))}
-      </div>
     </div>
   )
 }
@@ -471,7 +459,7 @@ export default function StepPagamento({ onNext, onBack }) {
 
         {/* hero header */}
         <div className="flex flex-col items-center text-center mb-5">
-          <div style={{ fontSize: 44, lineHeight: 1, marginBottom: 10 }}>💝</div>
+          <img src="/cupido.png" alt="" style={{ width: 200, height: 200, objectFit: 'contain', marginBottom: -10 }} />
           <p className="text-[22px] font-black text-gray-900 leading-tight">Presente quase pronto!</p>
           <p className="text-[14px] text-gray-500 mt-1.5 leading-relaxed">
             Preencha abaixo e surpreenda{' '}
