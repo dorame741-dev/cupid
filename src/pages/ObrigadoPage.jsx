@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSite } from '../lib/supabase'
-import { Check, Copy, ExternalLink, Heart } from 'lucide-react'
+import { Check, Copy, ExternalLink, Download, Pencil } from 'lucide-react'
 
 function WaIcon() {
   return (
@@ -14,10 +14,16 @@ function WaIcon() {
 export default function ObrigadoPage() {
   const { phone } = useParams()
   const [site, setSite] = useState(null)
-  const [status, setStatus] = useState('loading') // loading | paid | unpaid | error
+  const [status, setStatus] = useState('loading')
   const [copied, setCopied] = useState(false)
+  const [copiedEdit, setCopiedEdit] = useState(false)
+  const [qrLoaded, setQrLoaded] = useState(false)
+  const qrRef = useRef(null)
 
-  const siteUrl = `${window.location.origin}/${phone}`
+  const origin  = window.location.origin
+  const siteUrl = `${origin}/${phone}`
+  const editUrl = `${origin}/edit/${phone}`
+  const qrSrc   = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(siteUrl)}&margin=12&color=000000&bgcolor=FFFFFF`
 
   useEffect(() => {
     if (!phone) { setStatus('error'); return }
@@ -35,30 +41,46 @@ export default function ObrigadoPage() {
   )
   const waUrl = `https://wa.me/?text=${waText}`
 
-  const copy = () => {
-    navigator.clipboard.writeText(siteUrl).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
+  const copy = (text, setter) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setter(true)
+      setTimeout(() => setter(false), 2500)
     })
   }
 
+  const downloadQR = async () => {
+    try {
+      const res = await fetch(qrSrc)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `qrcode-presente-${phone}.png`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      window.open(qrSrc, '_blank')
+    }
+  }
+
   const partnerName = site?.quiz_data?.partnerName || ''
-  const myName = site?.quiz_data?.myName || ''
+  const myName      = site?.quiz_data?.myName || ''
 
   /* ── loading ── */
   if (status === 'loading') return (
-    <div style={styles.root}>
-      <div style={styles.content}>
-        <div style={styles.spinner} />
+    <div style={S.root}>
+      <div style={S.content}>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={S.spinner} />
       </div>
     </div>
   )
 
   /* ── not found ── */
   if (status === 'error') return (
-    <div style={styles.root}>
-      <div style={styles.content}>
-        <div style={styles.errorBox}>
+    <div style={S.root}>
+      <div style={S.content}>
+        <div style={S.errorBox}>
           <p style={{ fontSize: 40, marginBottom: 8 }}>😕</p>
           <p style={{ color: '#fff', fontWeight: 700, fontSize: 18, marginBottom: 6 }}>Página não encontrada</p>
           <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14 }}>Verifique o link e tente novamente.</p>
@@ -69,13 +91,14 @@ export default function ObrigadoPage() {
 
   /* ── not paid yet ── */
   if (status === 'unpaid') return (
-    <div style={styles.root}>
-      <div style={styles.content}>
-        <img src="/cupido.png" alt="Cupido" style={styles.logo} />
-        <div style={styles.badge}>⏳ Aguardando pagamento</div>
-        <h1 style={styles.title}>Presente em processamento</h1>
-        <p style={styles.sub}>Assim que o pagamento for confirmado, o site será liberado automaticamente. Isso leva alguns segundos.</p>
-        <button style={styles.refreshBtn} onClick={() => window.location.reload()}>
+    <div style={S.root}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={S.content}>
+        <img src="/cupido.png" alt="Cupido" style={S.logo} />
+        <div style={S.badge}>⏳ Aguardando pagamento</div>
+        <h1 style={S.title}>Presente em processamento</h1>
+        <p style={S.sub}>Assim que o pagamento for confirmado, o site será liberado automaticamente. Isso leva alguns segundos.</p>
+        <button style={S.refreshBtn} onClick={() => window.location.reload()}>
           Verificar novamente
         </button>
       </div>
@@ -84,61 +107,79 @@ export default function ObrigadoPage() {
 
   /* ── paid / success ── */
   return (
-    <div style={styles.root}>
-      <div style={styles.content}>
-        {/* logo */}
-        <div style={styles.logoWrap}>
-          <img src="/cupido.png" alt="Cupido" style={styles.logo} />
-          <div style={styles.heartRing}>
-            <Heart size={14} fill="#ff4d8d" color="#ff4d8d" />
-          </div>
-        </div>
+    <div style={S.root}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={S.content}>
+
+        {/* logo grande */}
+        <img src="/cupido.png" alt="Cupido" style={S.logo} />
 
         {/* badge */}
-        <div style={styles.badge}>✅ Pagamento confirmado!</div>
+        <div style={S.badge}>✅ Pagamento confirmado!</div>
 
         {/* title */}
-        <h1 style={styles.title}>
+        <h1 style={S.title}>
           {partnerName ? `Presente de ${myName || 'você'} para ${partnerName}` : 'Presente desbloqueado!'}
         </h1>
-        <p style={styles.sub}>O site personalizado está pronto e disponível para ser compartilhado.</p>
+        <p style={S.sub}>O site personalizado está pronto e disponível para ser compartilhado.</p>
 
-        {/* link box */}
-        <div style={styles.linkBox}>
-          <p style={styles.linkLabel}>Link do presente</p>
-          <div style={styles.linkRow}>
-            <span style={styles.linkText} title={siteUrl}>{siteUrl.replace('https://', '')}</span>
-            <button style={styles.copyBtn} onClick={copy} title="Copiar link">
-              {copied ? <Check size={16} color="#4ade80" /> : <Copy size={16} />}
+        {/* link do presente */}
+        <div style={S.linkBox}>
+          <p style={S.linkLabel}>Link do presente</p>
+          <div style={S.linkRow}>
+            <span style={S.linkText} title={siteUrl}>{siteUrl.replace('https://', '')}</span>
+            <button style={S.iconBtn} onClick={() => copy(siteUrl, setCopied)} title="Copiar link">
+              {copied ? <Check size={15} color="#4ade80" /> : <Copy size={15} />}
             </button>
           </div>
         </div>
 
+        {/* link de edição */}
+        <div style={{ ...S.linkBox, marginTop: -12, marginBottom: 24, borderTop: '1px solid rgba(255,255,255,0.08)', borderRadius: '0 0 14px 14px', borderTopLeftRadius: 0, borderTopRightRadius: 0, paddingTop: 12 }}>
+          <p style={{ ...S.linkLabel, color: 'rgba(232,121,249,0.6)' }}>Link para editar</p>
+          <div style={S.linkRow}>
+            <span style={{ ...S.linkText, color: 'rgba(232,121,249,0.7)', fontSize: 12 }} title={editUrl}>{editUrl.replace('https://', '')}</span>
+            <button style={{ ...S.iconBtn, color: 'rgba(232,121,249,0.7)' }} onClick={() => copy(editUrl, setCopiedEdit)} title="Copiar link de edição">
+              {copiedEdit ? <Check size={15} color="#4ade80" /> : <Copy size={15} />}
+            </button>
+            <a href={editUrl} style={{ ...S.iconBtn, color: 'rgba(232,121,249,0.7)', textDecoration: 'none', display: 'flex', alignItems: 'center' }} title="Abrir edição">
+              <Pencil size={14} />
+            </a>
+          </div>
+        </div>
+
         {/* QR code */}
-        <div style={styles.qrWrap}>
+        <div style={S.qrWrap}>
           <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(siteUrl)}`}
+            ref={qrRef}
+            src={qrSrc}
             alt="QR Code"
-            width={130}
-            height={130}
-            style={styles.qr}
+            width={160}
+            height={160}
+            style={S.qr}
+            onLoad={() => setQrLoaded(true)}
+            crossOrigin="anonymous"
           />
-          <p style={styles.qrLabel}>Aponte a câmera para abrir</p>
+          <p style={S.qrLabel}>Aponte a câmera para abrir</p>
+          <button style={S.downloadBtn} onClick={downloadQR} disabled={!qrLoaded}>
+            <Download size={15} />
+            Baixar QR Code
+          </button>
         </div>
 
         {/* WA button */}
-        <a href={waUrl} target="_blank" rel="noreferrer" style={styles.waBtn}>
+        <a href={waUrl} target="_blank" rel="noreferrer" style={S.waBtn}>
           <WaIcon />
           Salvar links no WhatsApp
         </a>
 
         {/* open site button */}
-        <a href={siteUrl} target="_blank" rel="noreferrer" style={styles.openBtn}>
+        <a href={siteUrl} target="_blank" rel="noreferrer" style={S.openBtn}>
           <ExternalLink size={17} />
           Abrir presente
         </a>
 
-        <p style={styles.footer}>
+        <p style={S.footer}>
           Compartilhe o link ou o QR Code com quem você ama 💕
         </p>
       </div>
@@ -146,7 +187,7 @@ export default function ObrigadoPage() {
   )
 }
 
-const styles = {
+const S = {
   root: {
     minHeight: '100dvh',
     background: 'linear-gradient(160deg, #1a0533 0%, #3b0764 40%, #1e0a3c 100%)',
@@ -163,30 +204,14 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '32px 20px 20px',
-    gap: 0,
-  },
-  logoWrap: {
-    position: 'relative',
-    marginBottom: 20,
+    padding: '28px 20px 20px',
   },
   logo: {
-    width: 90,
-    height: 90,
+    width: 150,
+    height: 150,
     objectFit: 'contain',
-    filter: 'drop-shadow(0 0 18px rgba(255,100,200,0.5))',
-  },
-  heartRing: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    background: '#1a0533',
-    borderRadius: '50%',
-    padding: 5,
-    border: '2px solid rgba(255,77,141,0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    filter: 'drop-shadow(0 0 28px rgba(255,100,200,0.55))',
+    marginBottom: 20,
   },
   badge: {
     background: 'rgba(255,255,255,0.1)',
@@ -220,20 +245,21 @@ const styles = {
     border: '1px solid rgba(255,255,255,0.15)',
     borderRadius: 14,
     padding: '14px 16px',
-    marginBottom: 20,
+    marginBottom: 0,
+    boxSizing: 'border-box',
   },
   linkLabel: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
-    fontWeight: 600,
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 10,
+    fontWeight: 700,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     margin: '0 0 8px',
   },
   linkRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   linkText: {
     flex: 1,
@@ -244,14 +270,14 @@ const styles = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   },
-  copyBtn: {
+  iconBtn: {
     flexShrink: 0,
-    background: 'rgba(255,255,255,0.1)',
+    background: 'rgba(255,255,255,0.08)',
     border: 'none',
     borderRadius: 8,
-    padding: '6px 10px',
+    padding: '6px 9px',
     cursor: 'pointer',
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.65)',
     display: 'flex',
     alignItems: 'center',
   },
@@ -259,17 +285,31 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     marginBottom: 24,
   },
   qr: {
-    borderRadius: 12,
+    borderRadius: 14,
     border: '3px solid rgba(255,255,255,0.15)',
+    display: 'block',
   },
   qrLabel: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: 12,
     margin: 0,
+  },
+  downloadBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 7,
+    background: 'rgba(255,255,255,0.08)',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: 10,
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    fontWeight: 600,
+    padding: '8px 18px',
+    cursor: 'pointer',
   },
   waBtn: {
     display: 'flex',
@@ -286,7 +326,7 @@ const styles = {
     padding: '15px 20px',
     marginBottom: 12,
     boxShadow: '0 4px 24px rgba(37,211,102,0.35)',
-    transition: 'opacity 0.15s',
+    boxSizing: 'border-box',
   },
   openBtn: {
     display: 'flex',
@@ -303,7 +343,7 @@ const styles = {
     borderRadius: 14,
     padding: '13px 20px',
     marginBottom: 24,
-    transition: 'background 0.15s',
+    boxSizing: 'border-box',
   },
   footer: {
     color: 'rgba(255,255,255,0.35)',
