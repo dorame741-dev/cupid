@@ -50,9 +50,9 @@ export function QRThumb3() {
 
 export const QR_TEMPLATES = [
   { id:0, Component:QRThumb0, label:'GRÁTIS',  price:0 },
-  { id:1, Component:QRThumb1, label:'R$ 4,90', price:4.90 },
-  { id:2, Component:QRThumb2, label:'R$ 4,90', price:4.90 },
-  { id:3, Component:QRThumb3, label:'R$ 4,90', price:4.90 },
+  { id:1, Component:QRThumb1, label:'R$ 2,90', price:2.90 },
+  { id:2, Component:QRThumb2, label:'R$ 2,90', price:2.90 },
+  { id:3, Component:QRThumb3, label:'R$ 2,90', price:2.90 },
 ]
 
 /* ── Full-size QR card (entregável) ──────────────────────────── */

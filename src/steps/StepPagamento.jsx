@@ -5,17 +5,19 @@ import { saveSite, markPaid, updateSiteData, uploadFromPreview, getAppConfig } f
 import { QR_TEMPLATES, SiteQRCard } from '../components/QRCard'
 
 const BASE_PRICE = 19.90
-const QR_EXTRA   = 4.90
+const QR_EXTRA   = 2.90
 const TOKEN      = import.meta.env.VITE_PUSHINPAY_TOKEN
 
-/* ── PIX Logo SVG ─────────────────────────────────────────────── */
+/* ── PIX image ────────────────────────────────────────────────── */
 function PixLogo({ size = 26, white = false }) {
-  const c = white ? 'white' : '#32BCAD'
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-      <path d="M50 4 L96 50 L50 96 L4 50 Z" stroke={c} strokeWidth="5" fill="none" strokeLinejoin="round"/>
-      <path d="M33 33 L67 67 M67 33 L33 67" stroke={c} strokeWidth="11" strokeLinecap="round"/>
-    </svg>
+    <img
+      src="/pix.png"
+      width={size}
+      height={size}
+      alt="PIX"
+      style={{ objectFit: 'contain', filter: white ? 'brightness(0) invert(1)' : 'none' }}
+    />
   )
 }
 
@@ -527,7 +529,7 @@ export default function StepPagamento({ onNext, onBack }) {
             {extra > 0 && (
               <div className="flex items-center justify-between text-[14px] mt-1">
                 <span className="text-gray-600">QR code personalizado</span>
-                <span className="font-semibold text-gray-800">+ R$ 4,90</span>
+                <span className="font-semibold text-gray-800">+ R$ 2,90</span>
               </div>
             )}
             <div className="border-t border-gray-100 mt-3 pt-3 flex items-center justify-between">

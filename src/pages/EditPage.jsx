@@ -1,19 +1,18 @@
 import { useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { getSite } from '../lib/supabase'
 
 export default function EditPage() {
   const { phone } = useParams()
-  const navigate = useNavigate()
 
   useEffect(() => {
     getSite(phone)
       .then(site => {
         const base = site?.quiz_data || {}
         sessionStorage.setItem('editData', JSON.stringify({ ...base, __editPhone: phone }))
-        navigate('/', { replace: true })
+        window.location.href = '/'
       })
-      .catch(() => navigate('/', { replace: true }))
+      .catch(() => { window.location.href = '/' })
   }, [phone])
 
   return (
