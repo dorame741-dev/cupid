@@ -525,79 +525,123 @@ function PreviewModal({ site, onClose }) {
   const edit   = `${origin}/edit/${site.phone}`
   const waMsg  = `Olá! 🎉 Seu pagamento foi efetuado com sucesso!\n\nAcesse seu presente aqui:\n${access}\n\nSe quiser editar algo, use este link:\n${edit}`
   const waUrl  = `https://wa.me/55${site.phone}?text=${encodeURIComponent(waMsg)}`
-  const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(access)}&format=png&margin=10&color=7c3aed&bgcolor=FFFFFF`
+  const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(access)}&format=png&margin=8&color=7c3aed&bgcolor=FFFFFF`
 
-  const row    = { display:'flex', flexDirection:'column', gap:6 }
-  const lbl    = { margin:0, fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }
+  const row     = { display:'flex', flexDirection:'column', gap:6 }
+  const lbl     = { margin:0, fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }
   const linkBox = { display:'flex', alignItems:'center', gap:8, background:C.surface, border:`1px solid ${C.border}`, borderRadius:10, padding:'9px 14px' }
+  const aBtn    = (col) => ({ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:`${col}18`, border:`1px solid ${col}30`, color:col, borderRadius:10, padding:'10px', textDecoration:'none', fontSize:13, fontWeight:700 })
 
   return (
     <div onClick={e=>{ if (e.target===e.currentTarget) onClose() }} style={{
-      position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', zIndex:300,
-      display:'flex', alignItems:'center', justifyContent:'center', padding:20,
+      position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', zIndex:300,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16,
     }}>
-      <div style={{ background:C.card, borderRadius:20, width:'100%', maxWidth:540, border:`1px solid ${C.border}`, maxHeight:'92vh', overflowY:'auto' }}>
+      <div style={{ background:C.card, borderRadius:20, width:'100%', maxWidth:920, border:`1px solid ${C.border}`, maxHeight:'95vh', display:'flex', flexDirection:'column' }}>
+
         {/* header */}
-        <div style={{ padding:'20px 24px 16px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ padding:'18px 24px 14px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
           <div>
             <p style={{ margin:0, fontSize:16, fontWeight:900, color:C.text }}>{couple}</p>
-            <p style={{ margin:0, fontSize:12, color:C.muted, marginTop:2 }}>{maskPhone(site.phone)} · {site.paid ? <span style={{color:C.green}}>✓ Pago</span> : <span style={{color:C.amber}}>⏳ Pendente</span>}</p>
+            <p style={{ margin:0, fontSize:12, color:C.muted, marginTop:2 }}>
+              {maskPhone(site.phone)} · {site.paid
+                ? <span style={{color:C.green}}>✓ Pago</span>
+                : <span style={{color:C.amber}}>⏳ Pendente — site bloqueado até pagamento</span>}
+            </p>
           </div>
-          <button onClick={onClose} style={{ background:`${C.red}12`, border:`1px solid ${C.red}25`, color:C.red, borderRadius:8, padding:'6px 10px', cursor:'pointer', fontSize:13, fontWeight:700 }}>✕</button>
+          <button onClick={onClose} style={{ background:`${C.red}12`, border:`1px solid ${C.red}25`, color:C.red, borderRadius:8, padding:'6px 12px', cursor:'pointer', fontSize:13, fontWeight:700 }}>✕ Fechar</button>
         </div>
 
-        <div style={{ padding:24, display:'flex', flexDirection:'column', gap:20 }}>
+        {/* body — 2 cols */}
+        <div style={{ display:'flex', flex:1, overflow:'hidden', minHeight:0 }}>
 
-          {/* access link */}
-          <div style={row}>
-            <p style={lbl}>🔗 Link de acesso (cliente)</p>
-            <div style={linkBox}>
-              <span style={{ flex:1, fontSize:12, color:C.soft, fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{access}</span>
-              <CopyBtn text={access} label="Copiar" small />
+          {/* left: links + actions */}
+          <div style={{ flex:1, overflowY:'auto', padding:22, display:'flex', flexDirection:'column', gap:18, borderRight:`1px solid ${C.border}` }}>
+
+            <div style={row}>
+              <p style={lbl}>🔗 Link de acesso</p>
+              <div style={linkBox}>
+                <span style={{ flex:1, fontSize:11, color:C.soft, fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{access}</span>
+                <CopyBtn text={access} label="Copiar" small />
+              </div>
             </div>
-            <a href={access} target="_blank" rel="noopener noreferrer" style={{
-              display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-              background:`${C.purple}18`, border:`1px solid ${C.purple}30`, color:C.purpleL,
-              borderRadius:10, padding:'10px', textDecoration:'none', fontSize:13, fontWeight:700,
+
+            <div style={row}>
+              <p style={lbl}>✏️ Link de edição</p>
+              <div style={linkBox}>
+                <span style={{ flex:1, fontSize:11, color:C.soft, fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{edit}</span>
+                <CopyBtn text={edit} label="Copiar" color={C.amber} bg={C.amber} small />
+              </div>
+              <p style={{ margin:0, fontSize:11, color:C.muted, lineHeight:1.5 }}>O cliente abre e o quiz já vem preenchido com os dados dele.</p>
+            </div>
+
+            <div style={row}>
+              <p style={lbl}>💬 Mensagem WhatsApp</p>
+              <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 14px' }}>
+                <pre style={{ margin:0, fontSize:11, color:C.soft, whiteSpace:'pre-wrap', lineHeight:1.7, fontFamily:'inherit' }}>{waMsg}</pre>
+              </div>
+              <a href={waUrl} target="_blank" rel="noopener noreferrer" style={aBtn(C.wa)}>
+                <MessageCircle size={14} /> Enviar no WhatsApp ↗
+              </a>
+            </div>
+
+            <div style={row}>
+              <p style={lbl}>📱 QR Code do presente</p>
+              <div style={{ background:'white', borderRadius:12, padding:16, display:'flex', alignItems:'center', gap:16 }}>
+                <img src={qrUrl} alt="QR" width={120} height={120} style={{ borderRadius:6, flexShrink:0 }} />
+                <div>
+                  <p style={{ margin:'0 0 8px', fontSize:12, color:'#374151', fontWeight:700 }}>Escaneie para abrir o presente</p>
+                  <p style={{ margin:0, fontSize:11, color:'#6b7280', lineHeight:1.5 }}>Funciona em qualquer câmera de celular. Quando escaneado abre direto o site personalizado.</p>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display:'flex', gap:8 }}>
+              <a href={access} target="_blank" rel="noopener noreferrer" style={{ ...aBtn(C.purple), flex:1 }}>
+                <ExternalLink size={14} /> Abrir site ↗
+              </a>
+              <a href={edit} target="_blank" rel="noopener noreferrer" style={{ ...aBtn(C.amber), flex:1 }}>
+                <Pencil size={14} /> Abrir edição ↗
+              </a>
+            </div>
+          </div>
+
+          {/* right: phone frame preview */}
+          <div style={{ width:300, flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'20px 16px', background:C.bg, gap:12 }}>
+            <p style={{ margin:0, fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }}>Prévia do site</p>
+
+            {/* phone shell */}
+            <div style={{
+              width:240, height:500,
+              background:'#1a1a2e',
+              borderRadius:36,
+              padding:'10px 6px',
+              border:`2px solid ${C.border}`,
+              boxShadow:`0 20px 50px rgba(0,0,0,0.6), inset 0 0 0 1px #2a2a42`,
+              position:'relative',
+              flexShrink:0,
             }}>
-              <ExternalLink size={14} /> Abrir site do cliente ↗
-            </a>
-          </div>
-
-          {/* edit link */}
-          <div style={row}>
-            <p style={lbl}>✏️ Link de edição (cliente pode reeditar)</p>
-            <div style={linkBox}>
-              <span style={{ flex:1, fontSize:12, color:C.soft, fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{edit}</span>
-              <CopyBtn text={edit} label="Copiar" color={C.amber} bg={C.amber} small />
+              {/* notch */}
+              <div style={{ width:60, height:5, background:'#2a2a42', borderRadius:3, margin:'0 auto 8px' }} />
+              {/* iframe */}
+              {site.paid ? (
+                <iframe
+                  src={access}
+                  title="Prévia do site do cliente"
+                  style={{ width:'100%', height:'calc(100% - 22px)', border:'none', borderRadius:28, display:'block' }}
+                />
+              ) : (
+                <div style={{ height:'calc(100% - 22px)', borderRadius:28, background:'#0a0208', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, padding:16 }}>
+                  <span style={{ fontSize:32 }}>🔒</span>
+                  <p style={{ margin:0, fontSize:12, color:'#6b7280', textAlign:'center', lineHeight:1.6 }}>Site bloqueado. Aparece assim que o pagamento for confirmado.</p>
+                </div>
+              )}
             </div>
-            <p style={{ margin:0, fontSize:11, color:C.muted, lineHeight:1.5 }}>Ao abrir, o quiz abre com os dados do cliente preenchidos. Ele pode trocar fotos, textos, etc. e pagar novamente.</p>
-          </div>
 
-          {/* whatsapp */}
-          <div style={row}>
-            <p style={lbl}>💬 Mensagem WhatsApp (pré-pronta)</p>
-            <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:10, padding:'12px 14px' }}>
-              <pre style={{ margin:0, fontSize:12, color:C.soft, whiteSpace:'pre-wrap', lineHeight:1.7, fontFamily:'inherit' }}>{waMsg}</pre>
-            </div>
-            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{
-              display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-              background:`${C.wa}18`, border:`1px solid ${C.wa}30`, color:C.wa,
-              borderRadius:10, padding:'10px', textDecoration:'none', fontSize:13, fontWeight:700,
-            }}>
-              <MessageCircle size={14} /> Enviar no WhatsApp ↗
-            </a>
+            <p style={{ margin:0, fontSize:10, color:C.muted, textAlign:'center', lineHeight:1.5 }}>
+              {site.paid ? 'Isso é exatamente o que o cliente vê ao abrir o link.' : 'Confirme o pagamento para liberar o site.'}
+            </p>
           </div>
-
-          {/* QR Code */}
-          <div style={row}>
-            <p style={lbl}>📱 QR Code do presente</p>
-            <div style={{ background:'white', borderRadius:14, padding:20, display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
-              <img src={qrUrl} alt="QR Code" width={180} height={180} style={{ borderRadius:8, display:'block' }} />
-              <p style={{ margin:0, fontSize:12, color:'#475569', textAlign:'center' }}>Quando escaneado, abre direto o site personalizado</p>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>
