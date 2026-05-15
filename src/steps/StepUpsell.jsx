@@ -172,7 +172,12 @@ export default function StepUpsell({ onAccept, onDecline }) {
       <div className="step-scroll flex flex-col items-center gap-0">
 
         {/* barra de progresso */}
-        <div className="w-full h-1.5 bg-purple-600 rounded-full mt-2 mb-6" />
+        <div className="w-full h-1.5 bg-purple-600 rounded-full mt-2 mb-4" />
+
+        {/* cupido */}
+        <div style={{ marginTop: -20, marginBottom: -30 }}>
+          <img src="/cupido.png" alt="" style={{ width: 220, height: 220, objectFit: 'contain' }} />
+        </div>
 
         {/* headline */}
         <div className="w-full text-center mb-4 px-2">
@@ -188,12 +193,6 @@ export default function StepUpsell({ onAccept, onDecline }) {
             que contam a história de vocês como um filme —{' '}
             <span className="font-bold text-gray-900">9 em cada 10 pessoas choram ao ver!</span>
           </p>
-        </div>
-
-        {/* coverflow de fotos redondas */}
-        <div className="w-full bg-gradient-to-b from-purple-50 to-white rounded-3xl pt-5 pb-4 px-3 flex flex-col items-center gap-3 mb-4" style={{ border: '1.5px solid #EDE9FE' }}>
-          <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Seções incluídas</p>
-          <CoverflowCarousel />
         </div>
 
         {/* mockup de celular */}
