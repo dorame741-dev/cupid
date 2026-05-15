@@ -16,6 +16,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: () => '/youtubei/v1/search?prettyPrint=false',
       },
+      '/api/cidades': {
+        target: 'https://servicodados.ibge.gov.br',
+        changeOrigin: true,
+        rewrite: () => '/api/v1/localidades/municipios?orderBy=nome',
+      },
     },
   },
 })

@@ -9,14 +9,9 @@ function normalize(str) {
 
 async function loadCities() {
   if (cachedCities) return cachedCities
-  const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome')
+  const res = await fetch('/api/cidades')
   if (!res.ok) throw new Error('Falha ao carregar')
-  const data = await res.json()
-  cachedCities = data.map(c => ({
-    label: `${c.nome} - ${c.microrregiao.mesorregiao.UF.sigla}`,
-    name: c.nome,
-    uf: c.microrregiao.mesorregiao.UF.sigla,
-  }))
+  cachedCities = await res.json()
   return cachedCities
 }
 
