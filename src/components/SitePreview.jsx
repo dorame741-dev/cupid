@@ -12,47 +12,70 @@ const BG_BLACK = '#030308'
 function PhotoCarousel({ photos }) {
   const [idx, setIdx]         = useState(0)
   const [opacity, setOpacity] = useState(1)
-  const touchX  = useRef(0)
   const autoRef = useRef(null)
   const fading  = useRef(false)
+  const touchX  = useRef(0)
 
   const fadeTo = (next) => {
     if (fading.current || photos.length <= 1) return
     fading.current = true
     setOpacity(0)
-    setTimeout(() => { setIdx(next); setOpacity(1); fading.current = false }, 500)
+    setTimeout(() => { setIdx(next); setOpacity(1); fading.current = false }, 400)
   }
 
   const resetAuto = () => {
     clearInterval(autoRef.current)
     if (photos.length > 1)
-      autoRef.current = setInterval(() => setIdx(i => { fadeTo((i + 1) % photos.length); return i }), 10000)
+      autoRef.current = setInterval(() => {
+        setIdx(i => { const next = (i + 1) % photos.length; fadeTo(next); return i })
+      }, 10000)
   }
 
   useEffect(() => { resetAuto(); return () => clearInterval(autoRef.current) }, [photos.length])
 
-  const swipe = (dir) => { fadeTo((idx + dir + photos.length) % photos.length); resetAuto() }
-
-  const allPhotos = photos.length > 0 ? photos : [
-    { preview: '/default-couple.png', isDefault: true },
-    { preview: '/default-couple.png', isDefault: true },
-  ]
+  const allPhotos = photos.length > 0 ? photos : [{ preview: '/default-couple.png', isDefault: true }]
   const isDefault = allPhotos[0]?.isDefault
+
+  const handleTap = (e) => {
+    if (isDefault || photos.length <= 1) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = (e.changedTouches?.[0]?.clientX ?? e.clientX) - rect.left
+    const dir = x < rect.width / 2 ? -1 : 1
+    fadeTo((idx + dir + photos.length) % photos.length)
+    resetAuto()
+  }
 
   return (
     <div
       className="mx-5 my-6 aspect-square rounded-3xl overflow-hidden shadow-2xl relative select-none"
-      style={{ cursor: isDefault ? 'default' : 'grab' }}
-      onTouchStart={e => { if (!isDefault) touchX.current = e.touches[0].clientX }}
-      onTouchEnd={e => { if (!isDefault) { const dx = touchX.current - e.changedTouches[0].clientX; if (Math.abs(dx) > 40) swipe(dx > 0 ? 1 : -1) } }}
-      onMouseDown={e => { if (!isDefault) touchX.current = e.clientX }}
-      onMouseUp={e => { if (!isDefault) { const dx = touchX.current - e.clientX; if (Math.abs(dx) > 40) swipe(dx > 0 ? 1 : -1) } }}
+      style={{ cursor: isDefault ? 'default' : 'pointer' }}
+      onTouchStart={e => { touchX.current = e.touches[0].clientX }}
+      onTouchEnd={handleTap}
+      onClick={handleTap}
     >
+      {/* story bars */}
+      {!isDefault && photos.length > 1 && (
+        <div style={{ position: 'absolute', top: 10, left: 10, right: 10, display: 'flex', gap: 4, zIndex: 20 }}>
+          {photos.map((_, i) => (
+            <div key={i} style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' }}>
+              <div
+                key={`fill-${idx}-${i}`}
+                style={{
+                  height: '100%', background: 'white', borderRadius: 2,
+                  width: i < idx ? '100%' : '0%',
+                  ...(i === idx ? { animation: 'storyFill 10s linear forwards' } : {}),
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
       <img src={allPhotos[idx]?.preview} alt="" aria-hidden
         className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl brightness-40 pointer-events-none" />
       <img src={allPhotos[idx]?.preview} alt="Foto do casal"
         className="relative z-10 w-full h-full object-cover pointer-events-none"
-        style={{ opacity, transition: 'opacity 0.5s ease' }} />
+        style={{ opacity, transition: 'opacity 0.4s ease' }} />
       {isDefault && (
         <div className="absolute inset-0 z-20 flex items-end justify-center pb-5 pointer-events-none">
           <span className="bg-black/50 backdrop-blur-sm text-white/80 text-[11px] font-medium px-3 py-1 rounded-full">
@@ -420,8 +443,15 @@ export default function SitePreview({ onBack, externalData, overlay }) {
 
       </div>
 
-      <div className="shrink-0 flex justify-center px-4 py-3 z-20"
-        style={{ background: 'rgba(3,3,8,0.92)', borderTop: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' }}>
+      <div className="shrink-0 flex justify-center px-4 pt-3"
+        style={{
+          background: 'rgba(3,3,8,0.95)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(8px)',
+          paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+          position: 'relative',
+          zIndex: 50,
+        }}>
         <button onClick={onBack}
           className="bg-purple-600 text-white rounded-full px-8 py-2.5 font-bold text-[14px] active:scale-95 transition-all btn-pulse">
           ‹ Voltar a Editar

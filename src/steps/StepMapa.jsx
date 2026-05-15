@@ -1,5 +1,23 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import { ImagePlus, MapPin, Calendar, Tag, Type, AlignLeft, Shuffle, Maximize2, X, Globe } from 'lucide-react'
+
+// Fix ícone padrão do Leaflet com Vite
+delete L.Icon.Default.prototype._getIconUrl
+const heartIcon = L.divIcon({
+  html: '<div style="font-size:34px;line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));color:#ef4444">♥</div>',
+  className: '',
+  iconSize: [34, 34],
+  iconAnchor: [17, 34],
+})
+
+function Recenter({ position }) {
+  const map = useMap()
+  useEffect(() => { if (position) map.setView(position, 13, { animate: true }) }, [position])
+  return null
+}
 import PreviewFab from '../components/PreviewFab'
 import BackButton from '../components/BackButton'
 import CitySearch from '../components/CitySearch'
@@ -167,78 +185,99 @@ function PlaceCard({ place, idx, onChange, onRemove }) {
 }
 
 /* ─── Mapa Preview ───────────────────────────────────────────── */
+const DEFAULT_POSITION = [-15.7801, -47.9292] // Brasília fallback
+
+async function geocodeCity(cityLabel) {
+  const city = cityLabel.split(' - ')[0]
+  const uf   = cityLabel.split(' - ')[1] || ''
+  const q    = encodeURIComponent(`${city}${uf ? ', ' + uf : ''}, Brasil`)
+  const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+    headers: { 'Accept-Language': 'pt-BR' },
+  })
+  const data = await res.json()
+  if (!data.length) return null
+  return [parseFloat(data[0].lat), parseFloat(data[0].lon)]
+}
+
 function MapaPreview({ places, title, subtitle, onClose }) {
-  const [idx, setIdx] = useState(0)
-  const place = places[idx]
+  const [idx, setIdx]     = useState(0)
+  const [coords, setCoords] = useState({})
+  const place  = places[idx]
   const isLast = idx === places.length - 1
+  const cityKey = place?.local || ''
+  const position = coords[cityKey] || DEFAULT_POSITION
+
+  useEffect(() => {
+    if (!cityKey || coords[cityKey] !== undefined) return
+    geocodeCity(cityKey)
+      .then(pos => setCoords(prev => ({ ...prev, [cityKey]: pos || DEFAULT_POSITION })))
+      .catch(() => setCoords(prev => ({ ...prev, [cityKey]: DEFAULT_POSITION })))
+  }, [cityKey])
 
   return (
-    <div className="step-root" style={{ background: '#5bc8d8' }}>
-      <div className="step-scroll flex flex-col items-center" style={{ background: '#5bc8d8' }}>
+    <div className="step-root" style={{ background: '#0d0d0d' }}>
 
-        {/* mapa grid sutil */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-        }} />
+      {/* mapa ocupa o topo */}
+      <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+        <MapContainer
+          center={position}
+          zoom={13}
+          style={{ width: '100%', height: '100%' }}
+          zoomControl={false}
+          attributionControl={false}
+        >
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <Marker position={position} icon={heartIcon} />
+          <Recenter position={position} />
+        </MapContainer>
 
-        {/* título */}
-        <div className="relative text-center pt-8 px-4 mb-8">
-          <h2 className="text-[24px] font-black text-white" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.18)' }}>{title}</h2>
-          <p className="text-[13px] text-white/70 mt-1">{subtitle}</p>
-        </div>
-
-        {/* polaroid */}
-        <div className="relative bg-white shadow-2xl p-3 pb-7 w-52"
-          style={{ transform: 'rotate(-2deg)', boxShadow: '0 12px 40px rgba(0,0,0,0.25)' }}>
-          <div className="w-full overflow-hidden" style={{ aspectRatio: '4/3', background: '#e5e7eb' }}>
+        {/* polaroid flutuando sobre o mapa */}
+        <div style={{
+          position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%) rotate(-2deg)',
+          background: 'white', padding: '10px 10px 28px', boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
+          zIndex: 1000, width: 160,
+        }}>
+          <div style={{ aspectRatio: '4/3', background: '#e5e7eb', overflow: 'hidden' }}>
             {place.photoUrl
-              ? <img src={place.photoUrl} alt="" className="w-full h-full object-cover" />
-              : <div className="w-full h-full flex items-center justify-center">
-                  <MapPin size={28} className="text-gray-300" />
+              ? <img src={place.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <MapPin size={24} color="#d1d5db" />
                 </div>}
           </div>
           {place.polaroidText && (
-            <p className="text-center text-[12px] text-gray-500 mt-2 leading-tight px-1"
-              style={{ fontFamily: 'cursive', fontStyle: 'italic' }}>
+            <p style={{ textAlign: 'center', fontSize: 11, color: '#6b7280', marginTop: 6, fontStyle: 'italic', fontFamily: 'cursive', lineHeight: 1.3 }}>
               {place.polaroidText}
             </p>
           )}
-          <p className="text-center text-[11px] text-gray-400 mt-1">{place.data}</p>
+          <p style={{ textAlign: 'center', fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{place.data}</p>
         </div>
 
-        {/* pin coração */}
-        <div className="relative mt-4 flex flex-col items-center">
-          <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
-            style={{ boxShadow: '0 4px 16px rgba(34,197,94,0.45)' }}>
-            <span className="text-white text-[22px] leading-none" style={{ marginTop: 1 }}>♥</span>
-          </div>
-          <div className="w-0 h-0" style={{
-            borderLeft: '6px solid transparent',
-            borderRight: '6px solid transparent',
-            borderTop: '8px solid #22c55e',
-            marginTop: -1,
-          }} />
+        {/* título no topo do mapa */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.55), transparent)',
+          padding: '14px 16px 32px', zIndex: 999,
+        }}>
+          <p style={{ color: 'white', fontSize: 17, fontWeight: 800, margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{title}</p>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, margin: 0 }}>{subtitle}</p>
         </div>
 
-        {/* dots indicador se múltiplos locais */}
+        {/* dots */}
         {places.length > 1 && (
-          <div className="flex gap-2 mt-5">
+          <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 5, zIndex: 999 }}>
             {places.map((_, i) => (
               <button key={i} onClick={() => setIdx(i)}
-                className={`rounded-full transition-all ${i === idx ? 'w-5 h-2 bg-white' : 'w-2 h-2 bg-white/40'}`} />
+                style={{ width: i === idx ? 8 : 6, height: i === idx ? 8 : 6, borderRadius: '50%', background: i === idx ? 'white' : 'rgba(255,255,255,0.4)', border: 'none', cursor: 'pointer', padding: 0 }} />
             ))}
           </div>
         )}
-
-        <div className="pb-6" />
       </div>
 
-      {/* painel inferior escuro */}
+      {/* painel inferior */}
       <div className="shrink-0" style={{ background: '#0d0d0d' }}>
         <div className="px-5 pt-4 pb-3">
           <div className="flex items-center gap-2.5 mb-2">
-            <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 bg-red-500 rounded-full flex items-center justify-center shrink-0">
               <MapPin size={13} className="text-white" />
             </div>
             <div>
@@ -250,17 +289,14 @@ function MapaPreview({ places, title, subtitle, onClose }) {
             <p className="text-gray-400 text-[13px] leading-relaxed mt-1">"{place.mensagem}"</p>
           )}
         </div>
-
         <div className="flex gap-3 px-5 pb-5 pt-2">
-          <button
-            onClick={() => idx === 0 ? onClose() : setIdx(i => i - 1)}
+          <button onClick={() => idx === 0 ? onClose() : setIdx(i => i - 1)}
             className="flex-1 bg-purple-600 text-white rounded-full py-3.5 font-semibold text-[14px] flex items-center justify-center gap-1 active:scale-95 transition-all">
-            ‹ Voltar
+            ‹ Voltar a Editar
           </button>
-          <button
-            onClick={() => isLast ? onClose() : setIdx(i => i + 1)}
-            className="flex-1 bg-green-500 text-white rounded-full py-3.5 font-bold text-[14px] flex items-center justify-center active:scale-95 transition-all">
-            {isLast ? 'Fechar' : 'Próxima seção'}
+          <button onClick={() => isLast ? onClose() : setIdx(i => i + 1)}
+            className="flex-1 bg-red-500 text-white rounded-full py-3.5 font-bold text-[14px] flex items-center justify-center active:scale-95 transition-all">
+            {isLast ? 'Fechar' : 'Próximo ›'}
           </button>
         </div>
       </div>

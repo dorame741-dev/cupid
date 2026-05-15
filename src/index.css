@@ -132,6 +132,9 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
+/* Story progress bar fill animation */
+@keyframes storyFill { from { width: 0% } to { width: 100% } }
+
 /* Floating hearts background animation */
 @keyframes heartRise {
   0%   { transform: translateY(0) scale(1) rotate(-8deg); opacity: 0; }
