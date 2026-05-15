@@ -518,11 +518,13 @@ function CopyBtn({ text, label = 'Copiar', icon: Icon = Copy, color = C.purpleL,
 
 /* ── Preview modal ──────────────────────────────────────────────── */
 function PreviewModal({ site, onClose }) {
-  const origin = window.location.origin
-  const qd     = site.quiz_data || {}
-  const couple = [qd.myName, qd.partnerName].filter(Boolean).join(' e ') || '—'
-  const access = `${origin}/${site.phone}`
-  const edit   = `${origin}/edit/${site.phone}`
+  const origin    = window.location.origin
+  const qd        = site.quiz_data || {}
+  const couple    = [qd.myName, qd.partnerName].filter(Boolean).join(' e ') || '—'
+  const access    = `${origin}/${site.phone}`
+  const edit      = `${origin}/edit/${site.phone}`
+  const obrigado  = `${origin}/obrigado/${site.phone}`
+  const [previewTab, setPreviewTab] = useState('site') // 'site' | 'obrigado'
   const waMsg  = `Olá! 🎉 Seu pagamento foi efetuado com sucesso!\n\nAcesse seu presente aqui:\n${access}\n\nSe quiser editar algo, use este link:\n${edit}`
   const waUrl  = `https://wa.me/55${site.phone}?text=${encodeURIComponent(waMsg)}`
   const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(access)}&format=png&margin=8&color=7c3aed&bgcolor=FFFFFF`
@@ -607,8 +609,18 @@ function PreviewModal({ site, onClose }) {
           </div>
 
           {/* right: phone frame preview */}
-          <div style={{ width:300, flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'20px 16px', background:C.bg, gap:12 }}>
-            <p style={{ margin:0, fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }}>Prévia do site</p>
+          <div style={{ width:300, flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', padding:'20px 16px', background:C.bg, gap:12 }}>
+            {/* tab switcher */}
+            <div style={{ display:'flex', background:C.surface, borderRadius:10, padding:3, border:`1px solid ${C.border}`, width:'100%' }}>
+              {[['site','🎁 Site'],['obrigado','✅ Pós-pag']].map(([k,l]) => (
+                <button key={k} onClick={()=>setPreviewTab(k)} style={{
+                  flex:1, padding:'6px 4px', borderRadius:8, border:'none', cursor:'pointer', fontSize:11, fontWeight:700,
+                  background: previewTab===k ? C.purple : 'transparent',
+                  color: previewTab===k ? '#fff' : C.muted,
+                  transition:'background 0.15s',
+                }}>{l}</button>
+              ))}
+            </div>
 
             {/* phone shell */}
             <div style={{
@@ -624,22 +636,32 @@ function PreviewModal({ site, onClose }) {
               {/* notch */}
               <div style={{ width:60, height:5, background:'#2a2a42', borderRadius:3, margin:'0 auto 8px' }} />
               {/* iframe */}
-              {site.paid ? (
+              {previewTab === 'site' ? (
+                site.paid ? (
+                  <iframe
+                    src={access}
+                    title="Prévia do site do cliente"
+                    style={{ width:'100%', height:'calc(100% - 22px)', border:'none', borderRadius:28, display:'block' }}
+                  />
+                ) : (
+                  <div style={{ height:'calc(100% - 22px)', borderRadius:28, background:'#0a0208', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, padding:16 }}>
+                    <span style={{ fontSize:32 }}>🔒</span>
+                    <p style={{ margin:0, fontSize:12, color:'#6b7280', textAlign:'center', lineHeight:1.6 }}>Site bloqueado. Aparece assim que o pagamento for confirmado.</p>
+                  </div>
+                )
+              ) : (
                 <iframe
-                  src={access}
-                  title="Prévia do site do cliente"
+                  src={obrigado}
+                  title="Página pós-pagamento"
                   style={{ width:'100%', height:'calc(100% - 22px)', border:'none', borderRadius:28, display:'block' }}
                 />
-              ) : (
-                <div style={{ height:'calc(100% - 22px)', borderRadius:28, background:'#0a0208', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, padding:16 }}>
-                  <span style={{ fontSize:32 }}>🔒</span>
-                  <p style={{ margin:0, fontSize:12, color:'#6b7280', textAlign:'center', lineHeight:1.6 }}>Site bloqueado. Aparece assim que o pagamento for confirmado.</p>
-                </div>
               )}
             </div>
 
             <p style={{ margin:0, fontSize:10, color:C.muted, textAlign:'center', lineHeight:1.5 }}>
-              {site.paid ? 'Isso é exatamente o que o cliente vê ao abrir o link.' : 'Confirme o pagamento para liberar o site.'}
+              {previewTab==='site'
+                ? (site.paid ? 'O que o cliente vê ao abrir o link.' : 'Site bloqueado até pagamento.')
+                : 'Página que o comprador recebe após pagar.'}
             </p>
           </div>
         </div>

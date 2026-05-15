@@ -411,7 +411,7 @@ export default function StepPagamento({ onNext, onBack }) {
           const purchaseParams = { value: total, currency: 'BRL', content_name: 'Presente de Casal' }
           firePixel('Purchase', purchaseParams)
           fireCAPI('Purchase', { ...purchaseParams, num_items: 1 })
-          setScreen('success')
+          window.location.href = `/obrigado/${digits}`
         }
       } catch {}
     }, 3000)
@@ -527,7 +527,7 @@ export default function StepPagamento({ onNext, onBack }) {
               const quizData = await buildQuizData()
               await saveSite('demo', quizData)
               await markPaid('demo').catch(() => {})
-              setScreen('success')
+              window.location.href = '/obrigado/demo'
             } catch {
               setErrMsg('Erro ao salvar demonstração. Verifique o Supabase.')
               setScreen('error')
