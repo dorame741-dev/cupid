@@ -192,7 +192,7 @@ function SiteQRCard({ style, siteUrl }) {
 
 /* ── PushinPay helpers ────────────────────────────────────────── */
 async function createPix(amountCents) {
-  const res = await fetch('/api/pushinpay/api/pix/cashIn', {
+  const res = await fetch('/api/pushinpay?path=/api/pix/cashIn', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${TOKEN}`,
@@ -209,7 +209,7 @@ async function createPix(amountCents) {
 }
 
 async function checkPix(id) {
-  const res = await fetch(`/api/pushinpay/api/pix/cashIn/${id}`, {
+  const res = await fetch(`/api/pushinpay?path=/api/pix/cashIn/${id}`, {
     headers: {
       'Authorization': `Bearer ${TOKEN}`,
       'Accept': 'application/json',
@@ -424,7 +424,7 @@ export default function StepPagamento({ onNext, onBack }) {
 
         <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col items-center gap-4 w-full">
           {pixData?.qr_code_base64 ? (
-            <img src={`data:image/png;base64,${pixData.qr_code_base64}`} width={200} height={200} alt="PIX QR" className="rounded-lg" />
+            <img src={pixData.qr_code_base64.startsWith('data:') ? pixData.qr_code_base64 : `data:image/png;base64,${pixData.qr_code_base64}`} width={200} height={200} alt="PIX QR" className="rounded-lg" />
           ) : (
             <div className="w-48 h-48 bg-gray-100 rounded-xl flex items-center justify-center">
               <Loader size={32} className="text-gray-400 animate-spin" />
