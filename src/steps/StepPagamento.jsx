@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import PandaMascot from '../components/PandaMascot'
 import { useQuiz } from '../context/QuizContext'
 import { ChevronDown, ChevronUp, Shield, Lock, RefreshCw, Copy, Check, Loader } from 'lucide-react'
 import { saveSite, markPaid, uploadFromPreview } from '../lib/supabase'
@@ -8,10 +7,91 @@ const BASE_PRICE = 19.90
 const QR_EXTRA   = 4.90
 const TOKEN      = import.meta.env.VITE_PUSHINPAY_TOKEN
 
+/* ── PIX Logo SVG ─────────────────────────────────────────────── */
+function PixLogo({ size = 26, white = false }) {
+  const c = white ? 'white' : '#32BCAD'
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      <path d="M50 4 L96 50 L50 96 L4 50 Z" stroke={c} strokeWidth="5" fill="none" strokeLinejoin="round"/>
+      <path d="M33 33 L67 67 M67 33 L33 67" stroke={c} strokeWidth="11" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+/* ── Reviews ──────────────────────────────────────────────────── */
 const REVIEWS = [
-  { name: 'Fernanda L.', text: '"Fácil de fazer e o resultado final fica incrível. Recomendo demais!"' },
-  { name: 'Carla',       text: '"Fiz pro nosso aniversário e ele ficou sem palavras. A música completou tudo!"' },
+  { name: 'Fernanda Lima',   city: 'São Paulo, SP',          text: 'Fiz o presente e ela chorou tanto que até eu me emocionei. A música e as fotos juntas ficaram perfeitas!', color: ['#f9a8d4','#ec4899'], initials: 'FL' },
+  { name: 'Carla Mendes',    city: 'Belo Horizonte, MG',     text: 'Comprei para o aniversário do meu marido e ele ficou completamente sem palavras. Superou todas as expectativas.', color: ['#c4b5fd','#7c3aed'], initials: 'CM' },
+  { name: 'Ana Beatriz',     city: 'Rio de Janeiro, RJ',     text: 'Nunca imaginei que um presente digital poderia ser tão especial. Valeu muito a pena cada centavo!', color: ['#fca5a5','#ef4444'], initials: 'AB' },
+  { name: 'Juliana Costa',   city: 'Curitiba, PR',           text: 'Perfeito para o Dia dos Namorados. Ele ficou emocionado com cada detalhe. Vou comprar de novo!', color: ['#86efac','#16a34a'], initials: 'JC' },
+  { name: 'Mariana Silva',   city: 'Brasília, DF',           text: 'Fiz às 23h e em minutos estava tudo pronto. Qualidade incrível pelo preço. Minha melhor compra do ano!', color: ['#fcd34d','#d97706'], initials: 'MS' },
 ]
+
+function ReviewCarousel() {
+  const [idx, setIdx] = useState(0)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIdx(i => (i + 1) % REVIEWS.length)
+        setVisible(true)
+      }, 350)
+    }, 4500)
+    return () => clearInterval(t)
+  }, [])
+
+  const r = REVIEWS[idx]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      {/* avatar */}
+      <div style={{
+        width: 72, height: 72, borderRadius: '50%',
+        background: `linear-gradient(135deg, ${r.color[0]}, ${r.color[1]})`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: `0 6px 24px ${r.color[1]}55`,
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'scale(1)' : 'scale(0.85)',
+        transition: 'opacity 0.35s ease, transform 0.35s ease',
+      }}>
+        <span style={{ fontSize: 22, fontWeight: 900, color: 'white', letterSpacing: -1 }}>{r.initials}</span>
+      </div>
+
+      {/* name + stars */}
+      <div style={{ textAlign: 'center', opacity: visible ? 1 : 0, transition: 'opacity 0.35s ease' }}>
+        <p style={{ fontWeight: 800, fontSize: 15, color: '#111827', marginBottom: 2 }}>{r.name}</p>
+        <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>{r.city}</p>
+        <p style={{ color: '#FBBF24', fontSize: 18, letterSpacing: 2 }}>★★★★★</p>
+      </div>
+
+      {/* text */}
+      <div style={{
+        background: '#f9fafb', borderRadius: 16, padding: '14px 18px',
+        width: '100%', textAlign: 'center',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(8px)',
+        transition: 'opacity 0.35s ease, transform 0.35s ease',
+      }}>
+        <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, fontStyle: 'italic' }}>"{r.text}"</p>
+      </div>
+
+      {/* dots */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        {REVIEWS.map((_, i) => (
+          <button key={i} onClick={() => { setVisible(false); setTimeout(() => { setIdx(i); setVisible(true) }, 300) }}
+            style={{
+              width: i === idx ? 20 : 6, height: 6, borderRadius: 3,
+              border: 'none', cursor: 'pointer', padding: 0,
+              background: i === idx ? '#7c3aed' : '#e5e7eb',
+              transition: 'width 0.3s ease, background 0.3s ease',
+            }} />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 /* ── WhatsApp mask ────────────────────────────────────────────── */
 function maskWA(v) {
@@ -23,40 +103,51 @@ function maskWA(v) {
 }
 
 /* ── QR card thumbnails ───────────────────────────────────────── */
-const QR_PH = 'https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=https://meupresente.app'
+const QR_PH = `https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=https://meupresente.app&color=000000&bgcolor=FFFFFF`
 
 function QRThumb0() {
   return (
-    <div style={{width:96,height:126,background:'#fff',border:'2px solid #e5e7eb',borderRadius:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:8}}>
-      <img src={QR_PH} width={72} height={72} alt="" style={{borderRadius:4}} />
-      <p style={{fontSize:10,color:'#9ca3af',fontWeight:600}}>Simples</p>
+    <div style={{width:96,height:130,background:'#fff',border:'2px solid #f3e8ff',borderRadius:14,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:5,padding:8,position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:4,left:4,fontSize:9,color:'#d1d5db'}}>♥ ♥</div>
+      <div style={{position:'absolute',top:4,right:4,fontSize:9,color:'#d1d5db'}}>♥ ♥</div>
+      <img src={QR_PH} width={68} height={68} alt="" style={{borderRadius:6}} />
+      <p style={{fontSize:9,color:'#7c3aed',fontWeight:700,letterSpacing:0.5}}>ESCANEIE AQUI</p>
     </div>
   )
 }
 function QRThumb1() {
   return (
-    <div style={{width:96,height:126,background:'linear-gradient(145deg,#ff6b8a,#e8365d)',borderRadius:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,padding:8,overflow:'hidden'}}>
-      <span style={{fontSize:9,color:'rgba(255,255,255,0.9)',fontFamily:'cursive',textAlign:'center',lineHeight:1.2}}>Juntos para<br/>SEMPRE</span>
-      <div style={{background:'white',borderRadius:8,padding:2}}><img src={QR_PH} width={60} height={60} alt="" /></div>
-      <span style={{fontSize:8,color:'rgba(255,255,255,0.75)'}}>❤ SURPRESA ❤</span>
+    <div style={{width:96,height:130,background:'linear-gradient(150deg,#be123c,#9f1239,#7f1d1d)',borderRadius:14,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:8,overflow:'hidden',position:'relative'}}>
+      {['9%','85%','15%','90%'].map((t,i) => (
+        <span key={i} style={{position:'absolute',top:t,left:['8%','75%','60%','20%'][i],fontSize:10,color:'rgba(255,255,255,0.3)',pointerEvents:'none'}}>♥</span>
+      ))}
+      <span style={{fontSize:10,color:'rgba(255,255,255,0.9)',fontFamily:'cursive',textAlign:'center',lineHeight:1.3,position:'relative',zIndex:1}}>Te amo para<br/>sempre ♥</span>
+      <div style={{background:'white',borderRadius:8,padding:3,zIndex:1}}><img src={QR_PH} width={60} height={60} alt="" /></div>
+      <span style={{fontSize:8,color:'rgba(255,255,255,0.7)',letterSpacing:1,zIndex:1}}>SURPRESA ESPECIAL</span>
     </div>
   )
 }
 function QRThumb2() {
   return (
-    <div style={{width:96,height:126,background:'linear-gradient(145deg,#fce4ec,#f8bbd0)',borderRadius:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,padding:8}}>
-      <span style={{fontSize:8,color:'#c2185b',fontFamily:'cursive',textAlign:'center',lineHeight:1.2}}>Uma surpresa<br/>especial para você</span>
-      <div style={{background:'white',borderRadius:'50%',padding:4,border:'2px solid #f48fb1'}}><img src={QR_PH} width={52} height={52} alt="" style={{borderRadius:'50%'}} /></div>
-      <span style={{fontSize:11}}>💕</span>
+    <div style={{width:96,height:130,background:'linear-gradient(150deg,#fce7f3,#fbcfe8,#f9a8d4)',borderRadius:14,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:8,position:'relative',overflow:'hidden'}}>
+      <span style={{position:'absolute',top:5,right:6,fontSize:11,color:'#db2777',opacity:0.5}}>♥</span>
+      <span style={{position:'absolute',bottom:8,left:7,fontSize:8,color:'#db2777',opacity:0.4}}>♥♥</span>
+      <span style={{fontSize:9,color:'#be185d',fontFamily:'cursive',textAlign:'center',lineHeight:1.3,zIndex:1}}>Uma surpresa<br/>só para você</span>
+      <div style={{background:'white',borderRadius:8,padding:3,border:'2px solid #fbcfe8',zIndex:1}}>
+        <img src={QR_PH} width={56} height={56} alt="" />
+      </div>
+      <span style={{fontSize:10,color:'#be185d',zIndex:1}}>♥ ♥ ♥</span>
     </div>
   )
 }
 function QRThumb3() {
   return (
-    <div style={{width:96,height:126,background:'linear-gradient(145deg,#f9748f,#c0392b)',borderRadius:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,padding:8}}>
-      <span style={{fontSize:8,color:'rgba(255,255,255,0.85)',fontFamily:'cursive',textAlign:'center'}}>Minha acessoria és você</span>
-      <span style={{fontSize:11,color:'white',fontFamily:'cursive',fontWeight:'bold'}}>Surpreenda</span>
-      <div style={{background:'white',borderRadius:8,padding:2}}><img src={QR_PH} width={52} height={52} alt="" /></div>
+    <div style={{width:96,height:130,background:'linear-gradient(150deg,#1c1917,#292524)',borderRadius:14,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:8,position:'relative',overflow:'hidden',border:'1px solid rgba(255,255,255,0.08)'}}>
+      <span style={{position:'absolute',top:5,right:6,fontSize:9,color:'rgba(251,191,36,0.4)'}}>♥</span>
+      <span style={{position:'absolute',bottom:8,left:6,fontSize:7,color:'rgba(251,191,36,0.3)'}}>♥♥</span>
+      <span style={{fontSize:9,color:'rgba(251,191,36,0.9)',fontFamily:'cursive',textAlign:'center',lineHeight:1.3,zIndex:1,letterSpacing:0.5}}>Eterno amor</span>
+      <div style={{background:'white',borderRadius:8,padding:3,boxShadow:'0 0 12px rgba(251,191,36,0.3)',zIndex:1}}><img src={QR_PH} width={56} height={56} alt="" /></div>
+      <span style={{fontSize:8,color:'rgba(251,191,36,0.7)',letterSpacing:1.5,zIndex:1}}>FOR YOU ♥</span>
     </div>
   )
 }
@@ -70,32 +161,43 @@ const QR_TEMPLATES = [
 
 /* ── Site QR card (entregável) ───────────────────────────────── */
 function SiteQRCard({ style, siteUrl }) {
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(siteUrl)}&color=000000&bgcolor=FFFFFF`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(siteUrl)}&color=000000&bgcolor=FFFFFF&margin=6`
   if (style === 0) return (
-    <div style={{background:'#fff',border:'2px solid #e5e7eb',borderRadius:16,padding:16,display:'flex',flexDirection:'column',alignItems:'center',gap:8,width:200}}>
-      <img src={qrUrl} width={140} height={140} alt="QR" style={{borderRadius:8}} />
-      <p style={{fontSize:11,color:'#6b7280',textAlign:'center'}}>Escaneie para abrir o presente</p>
+    <div style={{background:'#fff',border:'2px solid #f3e8ff',borderRadius:18,padding:18,display:'flex',flexDirection:'column',alignItems:'center',gap:10,width:210,position:'relative'}}>
+      <div style={{position:'absolute',top:8,left:10,fontSize:12,color:'#d8b4fe',opacity:0.6}}>♥ ♥</div>
+      <div style={{position:'absolute',top:8,right:10,fontSize:12,color:'#d8b4fe',opacity:0.6}}>♥ ♥</div>
+      <img src={qrUrl} width={160} height={160} alt="QR" style={{borderRadius:10}} />
+      <p style={{fontSize:11,color:'#7c3aed',fontWeight:700,letterSpacing:1}}>ESCANEIE PARA ABRIR</p>
     </div>
   )
   if (style === 1) return (
-    <div style={{background:'linear-gradient(145deg,#ff6b8a,#e8365d)',borderRadius:16,padding:16,display:'flex',flexDirection:'column',alignItems:'center',gap:8,width:200}}>
-      <p style={{fontSize:15,color:'white',fontFamily:'cursive',textAlign:'center',lineHeight:1.3}}>Juntos para SEMPRE</p>
-      <div style={{background:'white',borderRadius:12,padding:6}}><img src={qrUrl} width={130} height={130} alt="QR" /></div>
-      <p style={{fontSize:10,color:'rgba(255,255,255,0.85)',letterSpacing:2}}>❤ ESCANEIE AQUI ❤</p>
+    <div style={{background:'linear-gradient(150deg,#be123c,#9f1239,#7f1d1d)',borderRadius:18,padding:18,display:'flex',flexDirection:'column',alignItems:'center',gap:10,width:210,position:'relative',overflow:'hidden'}}>
+      {['8%','88%','20%','82%'].map((t,i)=>(
+        <span key={i} style={{position:'absolute',top:t,left:['6%','72%','65%','12%'][i],fontSize:14,color:'rgba(255,255,255,0.15)'}}>♥</span>
+      ))}
+      <p style={{fontSize:14,color:'white',fontFamily:'cursive',textAlign:'center',lineHeight:1.4,zIndex:1}}>Te amo para sempre ♥</p>
+      <div style={{background:'white',borderRadius:12,padding:6,zIndex:1}}><img src={qrUrl} width={148} height={148} alt="QR" /></div>
+      <p style={{fontSize:10,color:'rgba(255,255,255,0.8)',letterSpacing:2,zIndex:1}}>ESCANEIE AQUI ♥</p>
     </div>
   )
   if (style === 2) return (
-    <div style={{background:'linear-gradient(145deg,#fce4ec,#f8bbd0)',borderRadius:16,padding:16,display:'flex',flexDirection:'column',alignItems:'center',gap:8,width:200}}>
-      <p style={{fontSize:12,color:'#c2185b',fontFamily:'cursive',textAlign:'center',lineHeight:1.3}}>Uma surpresa especial para você</p>
-      <div style={{background:'white',borderRadius:'50%',padding:8,border:'3px solid #f48fb1'}}><img src={qrUrl} width={118} height={118} alt="QR" style={{borderRadius:'50%'}} /></div>
-      <span style={{fontSize:16}}>💕</span>
+    <div style={{background:'linear-gradient(150deg,#fce7f3,#fbcfe8,#f9a8d4)',borderRadius:18,padding:18,display:'flex',flexDirection:'column',alignItems:'center',gap:10,width:210,position:'relative',overflow:'hidden'}}>
+      <span style={{position:'absolute',top:8,right:10,fontSize:16,color:'#db2777',opacity:0.4}}>♥</span>
+      <span style={{position:'absolute',bottom:10,left:10,fontSize:12,color:'#db2777',opacity:0.3}}>♥♥</span>
+      <p style={{fontSize:13,color:'#be185d',fontFamily:'cursive',textAlign:'center',lineHeight:1.4,zIndex:1}}>Uma surpresa especial para você</p>
+      <div style={{background:'white',borderRadius:12,padding:6,border:'2px solid #fbcfe8',zIndex:1}}>
+        <img src={qrUrl} width={148} height={148} alt="QR" />
+      </div>
+      <p style={{fontSize:14,color:'#db2777',zIndex:1}}>♥ ♥ ♥</p>
     </div>
   )
   return (
-    <div style={{background:'linear-gradient(145deg,#f9748f,#c0392b)',borderRadius:16,padding:16,display:'flex',flexDirection:'column',alignItems:'center',gap:8,width:200}}>
-      <p style={{fontSize:11,color:'rgba(255,255,255,0.85)',fontFamily:'cursive',textAlign:'center'}}>Minha acessoria és você</p>
-      <p style={{fontSize:18,color:'white',fontFamily:'cursive',fontWeight:'bold'}}>Surpreenda</p>
-      <div style={{background:'white',borderRadius:12,padding:6}}><img src={qrUrl} width={118} height={118} alt="QR" /></div>
+    <div style={{background:'linear-gradient(150deg,#1c1917,#292524)',borderRadius:18,padding:18,display:'flex',flexDirection:'column',alignItems:'center',gap:10,width:210,border:'1px solid rgba(255,255,255,0.08)',position:'relative',overflow:'hidden'}}>
+      <span style={{position:'absolute',top:8,right:10,fontSize:12,color:'rgba(251,191,36,0.3)'}}>♥</span>
+      <span style={{position:'absolute',bottom:10,left:10,fontSize:10,color:'rgba(251,191,36,0.2)'}}>♥♥</span>
+      <p style={{fontSize:12,color:'rgba(251,191,36,0.85)',fontFamily:'cursive',textAlign:'center',lineHeight:1.4,letterSpacing:0.5,zIndex:1}}>Eterno amor ♥</p>
+      <div style={{background:'white',borderRadius:12,padding:6,boxShadow:'0 0 20px rgba(251,191,36,0.2)',zIndex:1}}><img src={qrUrl} width={148} height={148} alt="QR" /></div>
+      <p style={{fontSize:10,color:'rgba(251,191,36,0.7)',letterSpacing:2,zIndex:1}}>FOR YOU ♥</p>
     </div>
   )
 }
@@ -111,7 +213,10 @@ async function createPix(amountCents) {
     },
     body: JSON.stringify({ value: amountCents }),
   })
-  if (!res.ok) throw new Error(`PushinPay ${res.status}`)
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`PushinPay ${res.status}: ${text}`)
+  }
   return res.json()
 }
 
@@ -129,7 +234,7 @@ async function checkPix(id) {
 /* ── Success screen ───────────────────────────────────────────── */
 function SuccessScreen({ partnerName, siteUrl, digits, selectedQR, onNext }) {
   const [copied, setCopied] = useState(false)
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(siteUrl)}&format=png&margin=12`
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(siteUrl)}&format=png&margin=12&color=000000&bgcolor=FFFFFF`
 
   const copyLink = () => {
     navigator.clipboard.writeText(siteUrl).then(() => {
@@ -158,24 +263,20 @@ function SuccessScreen({ partnerName, siteUrl, digits, selectedQR, onNext }) {
       <div className="step-scroll flex flex-col items-center gap-5 px-4 pb-10">
         <div className="w-full h-2 bg-green-500 rounded-full mt-2" />
 
-        {/* header */}
         <div className="text-center mt-2">
-          <span className="text-5xl">🎉</span>
+          <div style={{ fontSize: 52, lineHeight: 1 }}>🎉</div>
           <p className="text-[22px] font-black text-gray-900 mt-3">Pagamento confirmado!</p>
           <p className="text-[14px] text-gray-500 mt-1">
             O presente de <span className="font-bold text-gray-800">{partnerName}</span> está pronto!
           </p>
         </div>
 
-        {/* link do site */}
         <div className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 flex flex-col gap-2">
           <p className="text-[11px] font-bold text-purple-600 tracking-widest">LINK DO PRESENTE</p>
           <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5">
             <p className="flex-1 text-[13px] text-gray-700 font-mono truncate">{siteUrl}</p>
             <button onClick={copyLink} className="shrink-0 active:scale-90 transition-all">
-              {copied
-                ? <Check size={18} className="text-green-500" />
-                : <Copy size={18} className="text-purple-500" />}
+              {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} className="text-purple-500" />}
             </button>
           </div>
           {copied && <p className="text-[11px] text-green-500 text-center">Link copiado!</p>}
@@ -185,22 +286,18 @@ function SuccessScreen({ partnerName, siteUrl, digits, selectedQR, onNext }) {
           </a>
         </div>
 
-        {/* QR code */}
         <div className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 flex flex-col items-center gap-3">
           <p className="text-[11px] font-bold text-purple-600 tracking-widest self-start">QR CODE DO PRESENTE</p>
-          <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
-            <SiteQRCard style={selectedQR} siteUrl={siteUrl} />
-          </div>
+          <SiteQRCard style={selectedQR} siteUrl={siteUrl} />
           <p className="text-[12px] text-gray-400 text-center">
             Quando {partnerName} escanear, abre direto o presente personalizado.
           </p>
           <button onClick={downloadQR}
             className="w-full bg-gray-800 text-white rounded-xl py-3 font-bold text-[14px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
-            ⬇ Baixar QR Code
+            Baixar QR Code
           </button>
         </div>
 
-        {/* ver preview */}
         <button onClick={onNext}
           className="w-full border-2 border-purple-600 text-purple-600 rounded-2xl py-3.5 font-black text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
           Ver prévia completa do presente ›
@@ -214,15 +311,13 @@ function SuccessScreen({ partnerName, siteUrl, digits, selectedQR, onNext }) {
 export default function StepPagamento({ onNext, onBack }) {
   const { data } = useQuiz()
 
-  /* form state */
   const [wa,         setWa]         = useState('')
   const [selectedQR, setSelectedQR] = useState(0)
   const [qrOpen,     setQrOpen]     = useState(true)
   const [couponOpen, setCouponOpen] = useState(false)
   const [coupon,     setCoupon]     = useState('')
 
-  /* payment state */
-  const [screen,  setScreen]  = useState('form') // form | loading | awaiting | success | error
+  const [screen,  setScreen]  = useState('form')
   const [pixData, setPixData] = useState(null)
   const [errMsg,  setErrMsg]  = useState('')
   const [copied,  setCopied]  = useState(false)
@@ -239,7 +334,6 @@ export default function StepPagamento({ onNext, onBack }) {
   const partnerName = data.partnerName || 'ela'
   const siteUrl = waValid ? `${window.location.origin}/${digits}` : ''
 
-  /* ── serializar quiz_data (fotos viram URLs do Storage) ── */
   const buildQuizData = useCallback(async () => {
     const photos = await Promise.all(
       (data.photos || []).map(p => uploadFromPreview(p?.preview, 'photos').then(url => ({ preview: url })).catch(() => null))
@@ -251,34 +345,29 @@ export default function StepPagamento({ onNext, onBack }) {
         return uploadFromPreview(url, 'galeria').catch(() => url)
       })
     )
-    return {
-      ...data,
-      photos: photos.filter(Boolean),
-      coverPhoto: null,
-      coverPhotoUrl,
-      galeriaPhotos: galeriaPhotos.filter(Boolean),
-      audio: null, // audio blobs não são suportados no storage nessa versão
-    }
+    return { ...data, photos: photos.filter(Boolean), coverPhoto: null, coverPhotoUrl, galeriaPhotos: galeriaPhotos.filter(Boolean), audio: null }
   }, [data])
 
-  /* ── gerar PIX ── */
   const handleGerar = useCallback(async () => {
+    if (!TOKEN) {
+      setErrMsg('Token PushinPay não configurado. Adicione VITE_PUSHINPAY_TOKEN nas variáveis de ambiente.')
+      setScreen('error')
+      return
+    }
     setScreen('loading')
     setErrMsg('')
     try {
-      // Salva dados no Supabase antes de gerar o PIX
       const quizData = await buildQuizData()
-      await saveSite(digits, quizData).catch(() => {}) // silencia erro de save para não bloquear pagamento
+      await saveSite(digits, quizData).catch(() => {})
       const d = await createPix(cents)
       setPixData(d)
       setScreen('awaiting')
     } catch (e) {
-      setErrMsg('Erro ao gerar o PIX. Tente novamente.')
+      setErrMsg('Erro ao gerar o PIX. Verifique o token PushinPay e tente novamente.')
       setScreen('error')
     }
   }, [cents, digits, buildQuizData])
 
-  /* ── polling pagamento ── */
   useEffect(() => {
     if (screen !== 'awaiting' || !pixData?.id) return
     const id = setInterval(async () => {
@@ -294,7 +383,6 @@ export default function StepPagamento({ onNext, onBack }) {
     return () => clearInterval(id)
   }, [screen, pixData, digits])
 
-  /* ── copy PIX code ── */
   const copyPix = () => {
     if (!pixData?.qr_code) return
     navigator.clipboard.writeText(pixData.qr_code).then(() => {
@@ -303,9 +391,7 @@ export default function StepPagamento({ onNext, onBack }) {
     })
   }
 
-  /* ════════════════════════════════════════════════════════════
-     TELA: loading
-  ════════════════════════════════════════════════════════════ */
+  /* ── loading ── */
   if (screen === 'loading') return (
     <div className="step-root">
       <div className="step-scroll flex flex-col items-center justify-center gap-5">
@@ -316,13 +402,11 @@ export default function StepPagamento({ onNext, onBack }) {
     </div>
   )
 
-  /* ════════════════════════════════════════════════════════════
-     TELA: error
-  ════════════════════════════════════════════════════════════ */
+  /* ── error ── */
   if (screen === 'error') return (
     <div className="step-root">
       <div className="step-scroll flex flex-col items-center justify-center gap-5 px-6 text-center">
-        <span className="text-5xl">😕</span>
+        <div style={{ fontSize: 52 }}>😕</div>
         <p className="text-[16px] font-bold text-gray-800">{errMsg}</p>
         <button onClick={() => setScreen('form')}
           className="bg-purple-600 text-white rounded-2xl px-8 py-3 font-bold text-[14px] active:scale-95 transition-all">
@@ -332,18 +416,14 @@ export default function StepPagamento({ onNext, onBack }) {
     </div>
   )
 
-  /* ════════════════════════════════════════════════════════════
-     TELA: aguardando pagamento
-  ════════════════════════════════════════════════════════════ */
+  /* ── aguardando ── */
   if (screen === 'awaiting') return (
     <div className="step-root">
       <div className="step-scroll flex flex-col items-center gap-5 px-4">
         <div className="w-full h-2 bg-purple-600 rounded-full mt-2" />
-
         <p className="text-[20px] font-black text-gray-900 text-center mt-2">Escaneie o QR Code PIX</p>
         <p className="text-[13px] text-gray-500 text-center -mt-2">Abra o app do seu banco e pague com PIX</p>
 
-        {/* QR PIX */}
         <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col items-center gap-4 w-full">
           {pixData?.qr_code_base64 ? (
             <img src={`data:image/png;base64,${pixData.qr_code_base64}`} width={200} height={200} alt="PIX QR" className="rounded-lg" />
@@ -352,24 +432,17 @@ export default function StepPagamento({ onNext, onBack }) {
               <Loader size={32} className="text-gray-400 animate-spin" />
             </div>
           )}
-
-          {/* valor */}
           <div className="text-center">
             <p className="text-[13px] text-gray-500">Valor a pagar</p>
             <p className="text-[24px] font-black text-gray-900">{totalStr}</p>
           </div>
-
-          {/* copia e cola */}
           {pixData?.qr_code && (
             <div className="w-full">
               <p className="text-[11px] text-gray-400 text-center mb-2">PIX copia e cola</p>
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
                 <p className="flex-1 text-[11px] text-gray-500 truncate font-mono">{pixData.qr_code}</p>
                 <button onClick={copyPix} className="shrink-0 active:scale-90 transition-all">
-                  {copied
-                    ? <Check size={16} className="text-green-500" />
-                    : <Copy size={16} className="text-purple-500" />
-                  }
+                  {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} className="text-purple-500" />}
                 </button>
               </div>
               {copied && <p className="text-[11px] text-green-500 text-center mt-1">Copiado!</p>}
@@ -377,62 +450,41 @@ export default function StepPagamento({ onNext, onBack }) {
           )}
         </div>
 
-        {/* status pulse */}
         <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 w-full">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shrink-0" />
           <p className="text-[13px] text-yellow-700 font-semibold">Aguardando confirmação do pagamento...</p>
         </div>
-
-        <p className="text-[11px] text-gray-400 text-center">
-          O pagamento é confirmado automaticamente em segundos após o Pix.
-        </p>
-
-        <button onClick={() => setScreen('form')} className="text-[12px] text-gray-400 underline pb-6">
-          Voltar e alterar dados
-        </button>
+        <p className="text-[11px] text-gray-400 text-center">O pagamento é confirmado automaticamente em segundos após o Pix.</p>
+        <button onClick={() => setScreen('form')} className="text-[12px] text-gray-400 underline pb-6">Voltar e alterar dados</button>
       </div>
     </div>
   )
 
-  /* ════════════════════════════════════════════════════════════
-     TELA: pagamento confirmado
-  ════════════════════════════════════════════════════════════ */
-  if (screen === 'success') return <SuccessScreen
-    partnerName={partnerName}
-    siteUrl={siteUrl}
-    digits={digits}
-    selectedQR={selectedQR}
-    onNext={onNext}
-  />
+  /* ── success ── */
+  if (screen === 'success') return <SuccessScreen partnerName={partnerName} siteUrl={siteUrl} digits={digits} selectedQR={selectedQR} onNext={onNext} />
 
-  /* ════════════════════════════════════════════════════════════
-     TELA: formulário principal
-  ════════════════════════════════════════════════════════════ */
+  /* ════════════ FORMULÁRIO ════════════ */
   return (
     <div className="step-root">
       <div className="step-scroll flex flex-col">
         <div className="w-full h-2 bg-purple-600 rounded-full mt-2 mb-6" />
 
-        <div className="flex flex-col items-center">
-          <div style={{ marginTop: -30, marginBottom: -38 }}>
-            <PandaMascot size={230} />
-          </div>
-        </div>
-
-        <div className="mt-5 bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-gray-700 text-[15px] leading-relaxed">
-            Tudo pronto para o grande momento! Estou ansioso para ver a reação
-            de <span className="font-bold text-gray-900">{partnerName}</span>.
-            Preencha os detalhes abaixo e prepare-se para surpreender.
+        {/* hero header */}
+        <div className="flex flex-col items-center text-center mb-5">
+          <div style={{ fontSize: 44, lineHeight: 1, marginBottom: 10 }}>💝</div>
+          <p className="text-[22px] font-black text-gray-900 leading-tight">Presente quase pronto!</p>
+          <p className="text-[14px] text-gray-500 mt-1.5 leading-relaxed">
+            Preencha abaixo e surpreenda{' '}
+            <span className="font-bold text-gray-800">{partnerName}</span> com algo inesquecível.
           </p>
         </div>
 
         {/* resumo */}
-        <div className="mt-4 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-4 pt-4 pb-3">
             <p className="text-[15px] font-black text-gray-900 mb-3">Resumo do pedido</p>
             <div className="flex items-center justify-between text-[14px]">
-              <span className="text-gray-600">🎁 Plano: Para Sempre (Vitalício)</span>
+              <span className="text-gray-600">Plano Vitalício — Para Sempre</span>
               <span className="font-semibold text-gray-800">R$ 19,90</span>
             </div>
             {extra > 0 && (
@@ -446,10 +498,9 @@ export default function StepPagamento({ onNext, onBack }) {
               <span className="text-[18px] font-black text-gray-900">{totalStr}</span>
             </div>
           </div>
-
           <button onClick={() => setCouponOpen(v => !v)}
             className="w-full flex items-center gap-2 px-4 py-3 border-t border-gray-100 text-[13px] text-purple-600 font-semibold">
-            🏷️ Possui um cupom de desconto?
+            Possui um cupom de desconto?
             {couponOpen ? <ChevronUp size={14} className="ml-auto"/> : <ChevronDown size={14} className="ml-auto"/>}
           </button>
           {couponOpen && (
@@ -466,7 +517,7 @@ export default function StepPagamento({ onNext, onBack }) {
         <div className="mt-5">
           <p className="text-[11px] font-bold text-purple-600 tracking-widest mb-2">SEUS DADOS</p>
           <div className="bg-white rounded-2xl shadow-sm px-4 py-3">
-            <input type="tel" placeholder="WhatsApp (com DDD)"
+            <input type="tel" placeholder="WhatsApp com DDD"
               value={formatted} onChange={e => setWa(e.target.value)}
               className="w-full outline-none text-[14px] text-gray-700 py-1 placeholder-gray-300" />
           </div>
@@ -484,7 +535,7 @@ export default function StepPagamento({ onNext, onBack }) {
         <div className="mt-5">
           <p className="text-[11px] font-bold text-purple-600 tracking-widest mb-2">FORMA DE PAGAMENTO</p>
           <div className="flex items-center gap-3 bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3">
-            <span className="text-2xl">🟢</span>
+            <PixLogo size={28} />
             <div>
               <p className="text-[13px] font-bold text-teal-800">Pagamento via PIX</p>
               <p className="text-[12px] text-teal-600">Instantâneo e seguro. O QR será gerado ao clicar abaixo.</p>
@@ -497,7 +548,7 @@ export default function StepPagamento({ onNext, onBack }) {
           <button onClick={() => setQrOpen(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3.5">
             <span className="text-[14px] font-bold text-gray-800 flex items-center gap-2">
-              <span className="text-[16px]">▦</span> QR code personalizado
+              QR code personalizado ♥
             </span>
             {qrOpen ? <ChevronUp size={16} className="text-gray-400"/> : <ChevronDown size={16} className="text-gray-400"/>}
           </button>
@@ -507,7 +558,7 @@ export default function StepPagamento({ onNext, onBack }) {
                 {QR_TEMPLATES.map(({ id, Component, label }) => (
                   <div key={id} className="flex flex-col items-center gap-1.5 shrink-0">
                     <button onClick={() => setSelectedQR(id)}
-                      style={{outline: selectedQR===id ? '2.5px solid #7c3aed' : '2.5px solid transparent', borderRadius:14, transition:'outline 0.15s'}}>
+                      style={{outline: selectedQR===id ? '2.5px solid #7c3aed' : '2.5px solid transparent', borderRadius:16, transition:'outline 0.15s'}}>
                       <Component />
                     </button>
                     <span className={`text-[11px] font-bold px-3 py-0.5 rounded-full ${selectedQR===id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
@@ -523,8 +574,10 @@ export default function StepPagamento({ onNext, onBack }) {
         {/* CTA */}
         <div className="mt-5">
           <button onClick={handleGerar}
-            className="w-full bg-emerald-500 text-white rounded-2xl py-4 font-black text-[15px] flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 active:scale-[0.98] transition-all">
-            🟢 Gerar QR Code PIX · {totalStr}
+            className="btn-pulse w-full text-white rounded-2xl py-4 font-black text-[16px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+            style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 8px 24px rgba(22,163,74,0.4)' }}>
+            <PixLogo size={24} white />
+            Gerar QR Code PIX · {totalStr}
           </button>
           <div className="flex items-center justify-center gap-4 mt-3">
             <span className="flex items-center gap-1 text-[11px] text-gray-400"><Shield size={11}/> Compra segura</span>
@@ -534,32 +587,18 @@ export default function StepPagamento({ onNext, onBack }) {
         </div>
 
         {/* reviews */}
-        <div className="mt-6 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="flex justify-center py-3 border-b border-gray-50">
-            <span className="flex items-center gap-1.5 text-[12px] font-bold text-purple-700 bg-purple-50 px-4 py-1.5 rounded-full">
-              👥 + de 50.257 casais felizes!
+        <div className="mt-6 bg-white rounded-2xl shadow-sm p-5">
+          <div className="text-center mb-5">
+            <span className="text-[11px] bg-purple-50 text-purple-700 px-4 py-1.5 rounded-full font-bold uppercase tracking-wide">
+              + de 50.000 casais felizes
             </span>
           </div>
-          {REVIEWS.map((r, i) => (
-            <div key={i} className={`px-4 py-4 ${i < REVIEWS.length-1 ? 'border-b border-gray-50' : ''}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-[13px]">
-                  {r.name[0]}
-                </div>
-                <div>
-                  <p className="text-[13px] font-bold text-gray-800">{r.name}</p>
-                  <p className="text-yellow-400 text-[11px] leading-none">★★★★★</p>
-                </div>
-              </div>
-              <p className="text-[13px] text-gray-600 leading-relaxed italic">{r.text}</p>
-            </div>
-          ))}
+          <ReviewCarousel />
         </div>
 
         {/* footer */}
         <div className="mt-8 flex flex-col items-center text-center gap-2 pb-10 px-2">
-          <span className="text-2xl">🐼</span>
-          <p className="text-[13px] font-bold text-gray-700">Panda</p>
+          <p className="text-[13px] font-bold text-gray-700">Panda Presentes</p>
           <p className="text-[12px] text-gray-500 leading-relaxed">
             Criamos experiências únicas para eternizar momentos especiais com{' '}
             <span className="text-purple-500">presentes virtuais e personalizados</span>.
@@ -570,8 +609,7 @@ export default function StepPagamento({ onNext, onBack }) {
             <button className="text-[11px] text-gray-400 underline">Política de Privacidade</button>
           </div>
           <p className="text-[10px] text-gray-400 mt-1">LOVEPANDA LTDA — CNPJ: 60.623.888/0001-40 — Pires do Rio/GO</p>
-          <p className="text-[10px] text-gray-400">Feito com 🤍 no Brasil</p>
-          <p className="text-[10px] text-gray-400">© 2025 Panda. Todos os direitos reservados.</p>
+          <p className="text-[10px] text-gray-400">Feito com amor no Brasil · © 2025 Panda Presentes</p>
         </div>
       </div>
     </div>
