@@ -420,11 +420,11 @@ export default function SitePreview({ onBack, externalData, overlay }) {
 
       </div>
 
-      <div className="shrink-0 flex justify-end px-4 py-3 z-20"
+      <div className="shrink-0 flex justify-center px-4 py-3 z-20"
         style={{ background: 'rgba(3,3,8,0.92)', borderTop: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' }}>
         <button onClick={onBack}
-          className="bg-purple-600 text-white rounded-full px-7 py-2.5 font-bold text-[14px] active:scale-95 transition-all btn-pulse">
-          Voltar
+          className="bg-purple-600 text-white rounded-full px-8 py-2.5 font-bold text-[14px] active:scale-95 transition-all btn-pulse">
+          ‹ Voltar a Editar
         </button>
       </div>
     </div>
