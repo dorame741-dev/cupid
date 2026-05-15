@@ -592,7 +592,7 @@ export default function StepPagamento({ onNext, onBack }) {
             <PixLogo size={28} />
             <div>
               <p className="text-[13px] font-bold text-teal-800">Pagamento via PIX</p>
-              <p className="text-[12px] text-teal-600">Instantâneo e seguro. O QR será gerado ao clicar abaixo.</p>
+              <p className="text-[12px] text-teal-600">Ao clicar, seu PIX é gerado na hora — pague escaneando o QR Code ou use o código copia e cola direto no seu banco.</p>
             </div>
           </div>
         </div>
@@ -626,7 +626,7 @@ export default function StepPagamento({ onNext, onBack }) {
             className="btn-pulse w-full text-white rounded-2xl py-4 font-black text-[16px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
             style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 8px 24px rgba(22,163,74,0.4)' }}>
             <PixLogo size={24} white />
-            Gerar QR Code PIX · {totalStr}
+            Gerar PIX · {totalStr}
           </button>
           <div className="flex items-center justify-center gap-4 mt-3">
             <span className="flex items-center gap-1 text-[11px] text-gray-400"><Shield size={11}/> Compra segura</span>

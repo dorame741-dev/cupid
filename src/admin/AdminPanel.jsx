@@ -4,7 +4,7 @@ import {
   DollarSign, ShoppingCart, Percent, RefreshCw, Copy, Check,
   ChevronRight, Calendar, Star, Camera, Gamepad2, Globe, Gift,
   MessageCircle, ExternalLink, Pencil, Search,
-  Tv2, Link2, Package, Sparkles,
+  Tv2, Link2, Package, Sparkles, BookOpen,
 } from 'lucide-react'
 import { getAllSites, getAppConfig, setAppConfig, createFreeLink, getFunnelEvents, getSite, updateSiteData } from '../lib/supabase'
 import { QR_TEMPLATES, SiteQRCard } from '../components/QRCard'
@@ -1094,6 +1094,7 @@ function DemoTab() {
 /* ── Settings sub-tabs ──────────────────────────────────────────── */
 function SettingsTabs({ active, setActive }) {
   const tabs = [
+    { id:'quiz',     label:'Quiz',          Icon: BookOpen },
     { id:'produto',  label:'Produto',       Icon: Package },
     { id:'pixel',    label:'Pixels & APIs', Icon: Tv2 },
     { id:'links',    label:'Links',         Icon: Link2 },
@@ -1144,6 +1145,130 @@ function SaveBtn({ status, onClick, label = 'Salvar', color = C.purple }) {
       {status==='saving' ? <><div style={{ width:14,height:14,border:`2px solid ${color}40`,borderTop:`2px solid ${color}`,borderRadius:'50%',animation:'spin 0.7s linear infinite' }} /> Salvando…</> :
        status==='saved'  ? <><Check size={14} /> Salvo!</> : label}
     </button>
+  )
+}
+
+/* ── Quiz config ────────────────────────────────────────────────── */
+function QuizView() {
+  const origin = window.location.origin
+  const [copied, setCopied] = useState(null)
+
+  const copy = (text, key) => {
+    navigator.clipboard.writeText(text)
+    setCopied(key)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  const quizzes = [
+    {
+      id: 'namorados',
+      emoji: '💝',
+      name: 'Dia dos Namorados',
+      sub: 'Cupid Presentes',
+      desc: 'Quiz completo com fotos, músicas, mensagens, jogos, galeria e pagamento PIX. O cliente edita pelo link /edit/{telefone}.',
+      quizUrl: `${origin}/`,
+      editUrl: `${origin}/edit/{telefone}`,
+      color: C.pink,
+      status: 'active',
+    },
+    {
+      id: 'biblico',
+      emoji: '✝️',
+      name: 'Temática Bíblica',
+      sub: 'Em desenvolvimento',
+      desc: 'Variação com textos bíblicos, paleta exclusiva e seções personalizadas para presentes cristãos.',
+      quizUrl: `${origin}/biblico`,
+      editUrl: `${origin}/edit-biblico/{telefone}`,
+      color: C.amber,
+      status: 'soon',
+    },
+  ]
+
+  const rowStyle = { display:'flex', flexDirection:'column', gap:8 }
+  const infoBox  = { background:C.bg, borderRadius:10, padding:'10px 14px' }
+  const monoUrl  = { margin:'4px 0 0', fontSize:13, fontFamily:'monospace', wordBreak:'break-all' }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      {quizzes.map(q => (
+        <div key={q.id} style={{ ...card, borderColor: q.status==='active' ? `${q.color}30` : C.border }}>
+          {/* header */}
+          <div style={{ display:'flex', alignItems:'flex-start', gap:14, marginBottom:16 }}>
+            <div style={{ fontSize:36, lineHeight:1, flexShrink:0 }}>{q.emoji}</div>
+            <div style={{ flex:1 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                <p style={{ margin:0, fontSize:16, fontWeight:800, color:C.text }}>{q.name}</p>
+                <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20,
+                  background: q.status==='active' ? `${C.green}20` : `${C.muted}18`,
+                  color:       q.status==='active' ? C.green       : C.muted }}>
+                  {q.status==='active' ? '● ATIVO' : '○ EM BREVE'}
+                </span>
+              </div>
+              <p style={{ margin:'3px 0 0', fontSize:12, color:C.muted }}>{q.sub}</p>
+              <p style={{ margin:'6px 0 0', fontSize:13, color:C.soft, lineHeight:1.5 }}>{q.desc}</p>
+            </div>
+          </div>
+
+          {/* URLs */}
+          <div style={rowStyle}>
+            <div style={infoBox}>
+              <p style={{ margin:0, fontSize:10, fontWeight:700, color:C.muted, letterSpacing:1, textTransform:'uppercase' }}>URL do Quiz</p>
+              <p style={{ ...monoUrl, color:C.purpleLt }}>{q.quizUrl}</p>
+            </div>
+            <div style={infoBox}>
+              <p style={{ margin:0, fontSize:10, fontWeight:700, color:C.muted, letterSpacing:1, textTransform:'uppercase' }}>URL de Edição</p>
+              <p style={{ ...monoUrl, color:C.amber }}>{q.editUrl}</p>
+            </div>
+          </div>
+
+          {/* actions */}
+          {q.status === 'active' && (
+            <div style={{ display:'flex', gap:8, marginTop:14, flexWrap:'wrap' }}>
+              <a href={q.quizUrl} target="_blank" rel="noopener noreferrer" style={{
+                background:`${q.color}18`, border:`1.5px solid ${q.color}35`, color:q.color,
+                borderRadius:10, padding:'9px 20px', fontSize:12, fontWeight:700,
+                textDecoration:'none', display:'flex', alignItems:'center', gap:6,
+              }}>
+                <ExternalLink size={12} /> Abrir Quiz
+              </a>
+              <button onClick={() => copy(q.quizUrl, q.id+'_quiz')} style={{
+                background:`${C.purple}18`, border:`1.5px solid ${C.purple}35`, color:C.purpleL,
+                borderRadius:10, padding:'9px 20px', cursor:'pointer', fontSize:12, fontWeight:700,
+                display:'flex', alignItems:'center', gap:6,
+              }}>
+                {copied===q.id+'_quiz' ? <><Check size={12}/> Copiado!</> : <><Copy size={12}/> Copiar Link</>}
+              </button>
+            </div>
+          )}
+
+          {q.status === 'soon' && (
+            <div style={{ marginTop:14, padding:'10px 14px', background:`${C.amber}0d`, borderRadius:10, border:`1px solid ${C.amber}20` }}>
+              <p style={{ margin:0, fontSize:12, color:C.amber }}>⏳ Em desenvolvimento — URL e configurações serão adicionadas em breve.</p>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* SQL reminder */}
+      <div style={{ background:C.bg, borderRadius:12, padding:'14px 20px', border:`1px solid ${C.border}` }}>
+        <p style={{ margin:'0 0 10px', fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }}>SQL necessário no Supabase</p>
+        <pre style={{ margin:0, fontFamily:'monospace', fontSize:11, color:'#86efac', lineHeight:2, whiteSpace:'pre-wrap', wordBreak:'break-all' }}>{`create table if not exists sites (
+  id         uuid primary key default gen_random_uuid(),
+  phone      text unique not null,
+  paid       boolean default false,
+  quiz_data  jsonb,
+  created_at timestamptz default now(),
+  paid_at    timestamptz
+);
+create table if not exists app_config (key text primary key, value text);
+create table if not exists funnel_events (
+  id         bigint generated always as identity primary key,
+  step       text not null,
+  created_at timestamptz default now()
+);
+-- Storage: bucket público "site-photos" (leitura pública habilitada)`}</pre>
+      </div>
+    </div>
   )
 }
 
@@ -1210,6 +1335,9 @@ function SettingsView({ price, onPriceChange }) {
   return (
     <div style={{ maxWidth:760 }}>
       <SettingsTabs active={tab} setActive={setTab} />
+
+      {/* ── Quiz ── */}
+      {tab === 'quiz' && <QuizView />}
 
       {/* ── Produto ── */}
       {tab === 'produto' && (
