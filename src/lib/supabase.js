@@ -86,6 +86,22 @@ export async function setAppConfig(key, value) {
   if (error) throw error
 }
 
+// Track quiz step visits for funnel analytics
+// Requires: create table funnel_events (id bigint generated always as identity primary key, step text not null, created_at timestamptz default now());
+export async function trackStep(step) {
+  if (!supabase) return
+  try { await supabase.from('funnel_events').insert({ step }) } catch {}
+}
+
+export async function getFunnelEvents(from, to) {
+  if (!supabase) return []
+  try {
+    const { data } = await supabase.from('funnel_events').select('step, created_at')
+      .gte('created_at', from.toISOString()).lte('created_at', to.toISOString())
+    return data || []
+  } catch { return [] }
+}
+
 // Create a free (already paid) site link for a phone number
 export async function createFreeLink(phone) {
   if (!supabase) throw new Error('Supabase não configurado')

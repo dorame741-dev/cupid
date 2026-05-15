@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { QuizProvider, useQuiz } from './context/QuizContext'
-import { getAppConfig } from './lib/supabase'
+import { getAppConfig, trackStep } from './lib/supabase'
 import TopBanner from './components/TopBanner'
 import StepIntroNames from './steps/StepIntroNames'
 import StepIntroDate from './steps/StepIntroDate'
@@ -37,6 +37,8 @@ function AppContent() {
   const back    = () => setStepIdx(i => Math.max(i - 1, 0))
   const skipTo  = (name) => setStepIdx(STEPS.indexOf(name))
   const step    = STEPS[stepIdx]
+
+  useEffect(() => { trackStep(step) }, [step])
 
   const sel = data.wrappedSections
 
