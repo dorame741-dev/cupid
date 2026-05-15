@@ -653,7 +653,7 @@ export default function StepPagamento({ onNext, onBack }) {
 
         {/* footer */}
         <div className="mt-8 flex flex-col items-center text-center gap-2 pb-10 px-2">
-          <p className="text-[13px] font-bold text-gray-700">Panda Presentes</p>
+          <p className="text-[13px] font-bold text-gray-700">Cupid Presentes</p>
           <p className="text-[12px] text-gray-500 leading-relaxed">
             Criamos experiências únicas para eternizar momentos especiais com{' '}
             <span className="text-purple-500">presentes virtuais e personalizados</span>.
@@ -663,8 +663,8 @@ export default function StepPagamento({ onNext, onBack }) {
             <span className="text-gray-300">•</span>
             <button className="text-[11px] text-gray-400 underline">Política de Privacidade</button>
           </div>
-          <p className="text-[10px] text-gray-400 mt-1">LOVEPANDA LTDA — CNPJ: 60.623.888/0001-40 — Pires do Rio/GO</p>
-          <p className="text-[10px] text-gray-400">Feito com amor no Brasil · © 2025 Panda Presentes</p>
+          <p className="text-[10px] text-gray-400 mt-1">LOVECUPID LTDA — CNPJ: 60.623.888/0001-40 — Pires do Rio/GO</p>
+          <p className="text-[10px] text-gray-400">Feito com amor no Brasil · © 2025 Cupid Presentes</p>
         </div>
       </div>
     </div>
