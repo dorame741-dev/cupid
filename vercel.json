@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "routes": [
     { "handle": "filesystem" },
+    { "src": "/api/pushinpay/(.*)", "dest": "/api/pushinpay" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]

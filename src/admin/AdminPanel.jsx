@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getAllSites } from '../lib/supabase'
+import { getAllSites, getAppConfig, setAppConfig, createFreeLink } from '../lib/supabase'
 
 const S = {
   bg: '#0b0b0f',
@@ -36,12 +36,114 @@ function StatCard({ label, value, color, sub }) {
   )
 }
 
+function SettingsTab() {
+  const [pixelId,      setPixelId]      = useState('')
+  const [pixelStatus,  setPixelStatus]  = useState(null) // null | 'saving' | 'saved' | 'error'
+  const [freePhone,    setFreePhone]    = useState('')
+  const [freeStatus,   setFreeStatus]   = useState(null) // null | 'loading' | {link} | 'error'
+
+  useEffect(() => {
+    getAppConfig('pixel_id').then(v => { if (v) setPixelId(v) })
+  }, [])
+
+  const savePixel = async () => {
+    setPixelStatus('saving')
+    try {
+      await setAppConfig('pixel_id', pixelId.trim())
+      setPixelStatus('saved')
+      setTimeout(() => setPixelStatus(null), 3000)
+    } catch {
+      setPixelStatus('error')
+    }
+  }
+
+  const genFreeLink = async () => {
+    const digits = freePhone.replace(/\D/g, '')
+    if (digits.length < 10) return
+    setFreeStatus('loading')
+    try {
+      await createFreeLink(digits)
+      setFreeStatus({ link: `${window.location.origin}/${digits}` })
+    } catch {
+      setFreeStatus('error')
+    }
+  }
+
+  const inp = {
+    background: S.surface, border: `1.5px solid ${S.border}`,
+    borderRadius: 10, padding: '10px 16px', color: S.text, fontSize: 14,
+    outline: 'none', width: '100%', boxSizing: 'border-box',
+  }
+  const btn = (color = '#7c3aed') => ({
+    background: `${color}20`, border: `1px solid ${color}40`,
+    color, borderRadius: 10, padding: '10px 20px',
+    cursor: 'pointer', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+      {/* Pixel */}
+      <div style={{ background: S.surface, borderRadius: 16, border: `1px solid ${S.border}`, padding: 28 }}>
+        <p style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: S.text }}>Facebook / Meta Pixel</p>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: S.muted }}>
+          O pixel dispara <strong style={{ color: '#a78bfa' }}>InitiateCheckout</strong> quando o cliente chega na tela de pagamento,
+          e <strong style={{ color: '#10b981' }}>Purchase</strong> (com valor) ao confirmar o PIX.
+        </p>
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: 1 }}>Pixel ID</p>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <input style={inp} value={pixelId} onChange={e => setPixelId(e.target.value)} placeholder="Ex: 1234567890123456" />
+          <button onClick={savePixel} style={btn()}>
+            {pixelStatus === 'saving' ? 'Salvando…' : pixelStatus === 'saved' ? '✓ Salvo' : 'Salvar'}
+          </button>
+        </div>
+        {pixelStatus === 'error' && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 8 }}>Erro ao salvar. Verifique o Supabase (tabela app_config).</p>}
+        <div style={{ marginTop: 16, background: S.bg, borderRadius: 10, padding: '12px 16px', fontFamily: 'monospace', fontSize: 12, color: '#86efac', lineHeight: 1.8 }}>
+          {'-- SQL para criar a tabela no Supabase:'}<br />
+          {'create table app_config (key text primary key, value text);'}
+        </div>
+      </div>
+
+      {/* Free link */}
+      <div style={{ background: S.surface, borderRadius: 16, border: `1px solid ${S.border}`, padding: 28 }}>
+        <p style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: S.text }}>Gerar link gratuito</p>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: S.muted }}>
+          Cria um site já marcado como pago para o número informado, sem precisar passar pelo quiz ou PIX.
+          Útil para testes ou para clientes especiais.
+        </p>
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: 1 }}>WhatsApp (DDD + número)</p>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <input style={inp} value={freePhone} onChange={e => setFreePhone(e.target.value.replace(/\D/g,''))} placeholder="Ex: 31999991234" maxLength={11} />
+          <button onClick={genFreeLink} disabled={freePhone.replace(/\D/g,'').length < 10} style={btn('#10b981')}>
+            {freeStatus === 'loading' ? 'Gerando…' : 'Gerar link'}
+          </button>
+        </div>
+        {freeStatus && typeof freeStatus === 'object' && (
+          <div style={{ marginTop: 16, background: '#10b98115', border: '1px solid #10b98130', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 13, color: '#10b981', fontFamily: 'monospace', flex: 1, wordBreak: 'break-all' }}>{freeStatus.link}</span>
+            <button onClick={() => navigator.clipboard.writeText(freeStatus.link)}
+              style={{ background: '#10b98120', border: '1px solid #10b98140', color: '#10b981', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+              Copiar
+            </button>
+            <a href={freeStatus.link} target="_blank" rel="noopener noreferrer"
+              style={{ background: '#7c3aed20', border: '1px solid #7c3aed40', color: '#a78bfa', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+              Abrir ↗
+            </a>
+          </div>
+        )}
+        {freeStatus === 'error' && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 8 }}>Erro ao criar o link. Verifique o Supabase.</p>}
+      </div>
+    </div>
+  )
+}
+
 export default function AdminPanel() {
   const [sites, setSites]     = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
   const [search, setSearch]   = useState('')
-  const [filter, setFilter]   = useState('all') // all | paid | pending
+  const [filter, setFilter]   = useState('all')
+  const [tab,    setTab]      = useState('clients') // clients | settings
 
   const load = () => {
     setLoading(true)
@@ -87,7 +189,20 @@ export default function AdminPanel() {
             <p style={{ margin: 0, fontSize: 11, color: S.muted }}>Painel de controle</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* tab buttons */}
+          {[['clients','Clientes'],['settings','Configurações']].map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key)}
+              style={{
+                padding: '6px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                border: tab === key ? '1px solid #7c3aed' : `1px solid ${S.border}`,
+                background: tab === key ? '#7c3aed20' : 'transparent',
+                color: tab === key ? '#a78bfa' : S.muted,
+              }}>
+              {label}
+            </button>
+          ))}
+          <div style={{ width: 1, height: 24, background: S.border, margin: '0 4px' }} />
           <button onClick={load}
             style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
             Atualizar
@@ -101,6 +216,10 @@ export default function AdminPanel() {
 
       <main style={{ flex: 1, maxWidth: 1280, width: '100%', margin: '0 auto', padding: '32px 32px' }}>
 
+        {/* Settings tab */}
+        {tab === 'settings' && <SettingsTab />}
+
+        {tab === 'clients' && <>
         {/* stat cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
           <StatCard label="Total de clientes" value={sites.length} color="#7c3aed" />
@@ -241,6 +360,7 @@ export default function AdminPanel() {
             })}
           </div>
         )}
+        </>}
       </main>
 
       <style>{`

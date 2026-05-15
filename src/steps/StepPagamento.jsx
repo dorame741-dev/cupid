@@ -295,6 +295,12 @@ function SuccessScreen({ partnerName, siteUrl, digits, selectedQR, onNext }) {
   )
 }
 
+function firePixel(event, params) {
+  if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
+    window.fbq('track', event, params)
+  }
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 export default function StepPagamento({ onNext, onBack }) {
   const { data } = useQuiz()
@@ -321,6 +327,9 @@ export default function StepPagamento({ onNext, onBack }) {
 
   const partnerName = data.partnerName || 'ela'
   const siteUrl = waValid ? `${window.location.origin}/${digits}` : ''
+
+  // Fire InitiateCheckout when this step first appears
+  useEffect(() => { firePixel('InitiateCheckout', { value: BASE_PRICE, currency: 'BRL', content_name: 'Presente de Casal' }) }, [])
 
   const buildQuizData = useCallback(async () => {
     const photos = await Promise.all(
@@ -364,6 +373,7 @@ export default function StepPagamento({ onNext, onBack }) {
         if (d.status === 'paid' || d.status === 'PAID' || d.status === 'approved') {
           clearInterval(id)
           await markPaid(digits).catch(() => {})
+          firePixel('Purchase', { value: total, currency: 'BRL', content_name: 'Presente de Casal' })
           setScreen('success')
         }
       } catch {}

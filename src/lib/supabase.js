@@ -70,3 +70,28 @@ export async function getAllSites() {
   if (error) throw error
   return data
 }
+
+// App config (pixel ID etc.) — requires table: create table app_config (key text primary key, value text);
+export async function getAppConfig(key) {
+  if (!supabase) return null
+  try {
+    const { data } = await supabase.from('app_config').select('value').eq('key', key).maybeSingle()
+    return data?.value || null
+  } catch { return null }
+}
+
+export async function setAppConfig(key, value) {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { error } = await supabase.from('app_config').upsert({ key, value }, { onConflict: 'key' })
+  if (error) throw error
+}
+
+// Create a free (already paid) site link for a phone number
+export async function createFreeLink(phone) {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { error } = await supabase.from('sites').upsert(
+    { phone, quiz_data: { freeLink: true }, paid: true, paid_at: new Date().toISOString() },
+    { onConflict: 'phone' }
+  )
+  if (error) throw error
+}
