@@ -1281,7 +1281,8 @@ function SettingsView({ price, onPriceChange }) {
   // Pixel
   const [pixelId,   setPixelId]   = useState('')
   const [fbToken,   setFbToken]   = useState('')
-  const [ttPixelId, setTtPixelId] = useState('')
+  const [ttPixelId,  setTtPixelId]  = useState('')
+  const [ttToken,    setTtToken]    = useState('')
 
   // Links
   const [freePhone, setFreePhone] = useState('')
@@ -1294,11 +1295,13 @@ function SettingsView({ price, onPriceChange }) {
       getAppConfig('pixel_id'),
       getAppConfig('fb_access_token'),
       getAppConfig('tiktok_pixel_id'),
+      getAppConfig('tiktok_access_token'),
       getAppConfig('price'),
-    ]).then(([pid, fbt, ttid, p]) => {
+    ]).then(([pid, fbt, ttid, ttat, p]) => {
       if (pid)  setPixelId(pid)
       if (fbt)  setFbToken(fbt)
       if (ttid) setTtPixelId(ttid)
+      if (ttat) setTtToken(ttat)
       if (p)    setPriceInput(String(parseFloat(p)).replace('.', ','))
     })
   }, [])
@@ -1399,15 +1402,17 @@ function SettingsView({ price, onPriceChange }) {
             </div>
             <ConfigField label="TikTok Pixel ID" value={ttPixelId} onChange={setTtPixelId} placeholder="C1ABCDEFGHIJ..."
               hint="Encontre em TikTok Ads Manager → Assets → Events → Web Events → Pixel" />
+            <ConfigField label="Access Token (Events API — server-side)" value={ttToken} onChange={setTtToken} placeholder="a1b2c3d4e5..."
+              hint="TikTok Ads Manager → Assets → Events → Web Events → Manage → Events API → Generate Access Token" />
             <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-              <SaveBtn status={status.tiktok} onClick={()=>save('tiktok_pixel_id', ttPixelId.trim(), 'tiktok')} label="Salvar TikTok" color={C.tt} />
+              <SaveBtn status={status.tiktok} onClick={async()=>{ await save('tiktok_pixel_id', ttPixelId.trim(), 'tiktok'); await save('tiktok_access_token', ttToken.trim(), 'tiktok') }} label="Salvar TikTok" color={C.tt} />
               {status.tiktok==='error' && <span style={{ color:C.red, fontSize:12 }}>Erro ao salvar.</span>}
             </div>
             <div style={{ background:C.bg, borderRadius:12, padding:'14px 18px', display:'flex', flexDirection:'column', gap:8 }}>
               <p style={{ margin:0, fontSize:12, fontWeight:700, color:C.muted }}>Eventos rastreados automaticamente:</p>
               <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-                {[['InitiateCheckout',C.amber],['CompletePayment',C.green],['PageView',C.blue]].map(([e,c])=>(
-                  <span key={e} style={{ fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20, background:`${c}15`, color:c, border:`1px solid ${c}25` }}>{e}</span>
+                {[['InitiateCheckout','Pixel + Events API',C.amber],['CompletePayment','Pixel + Events API',C.green],['PageView','Pixel',C.blue]].map(([e,m,c])=>(
+                  <span key={e} style={{ fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20, background:`${c}15`, color:c, border:`1px solid ${c}25` }}>{e} <span style={{opacity:0.6}}>· {m}</span></span>
                 ))}
               </div>
             </div>

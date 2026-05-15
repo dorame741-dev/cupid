@@ -239,6 +239,32 @@ async function fireCAPI(eventName, customData) {
   } catch {}
 }
 
+async function fireTTCAPI(eventName, customData) {
+  try {
+    const [pixelCode, accessToken] = await Promise.all([
+      getAppConfig('tiktok_pixel_id'),
+      getAppConfig('tiktok_access_token'),
+    ])
+    if (!pixelCode || !accessToken) return
+    const ttEvent = eventName === 'Purchase' ? 'CompletePayment' : 'InitiateCheckout'
+    await fetch('/api/tiktok-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pixel_code: pixelCode,
+        access_token: accessToken,
+        events: [{
+          event_name: ttEvent,
+          event_time: Math.floor(Date.now() / 1000),
+          event_source_url: window.location.href,
+          user_data: { client_user_agent: navigator.userAgent },
+          custom_data: customData,
+        }],
+      }),
+    })
+  } catch {}
+}
+
 /* ── Edit-mode save screen ────────────────────────────────────── */
 function EditSaveScreen({ editPhone, siteUrl, data, buildQuizData, onBack }) {
   const [saving, setSaving] = useState(false)
@@ -333,6 +359,7 @@ export default function StepPagamento({ onNext, onBack }) {
     const p = { value: BASE_PRICE, currency: 'BRL', content_name: 'Presente de Casal' }
     firePixel('InitiateCheckout', p)
     fireCAPI('InitiateCheckout', { ...p, num_items: 1 })
+    fireTTCAPI('InitiateCheckout', { value: BASE_PRICE, currency: 'BRL' })
   }, [])
 
   const buildQuizData = useCallback(async () => {
@@ -380,6 +407,7 @@ export default function StepPagamento({ onNext, onBack }) {
           const purchaseParams = { value: total, currency: 'BRL', content_name: 'Presente de Casal' }
           firePixel('Purchase', purchaseParams)
           fireCAPI('Purchase', { ...purchaseParams, num_items: 1 })
+          fireTTCAPI('Purchase', { value: total, currency: 'BRL' })
           window.location.href = `/obrigado/${digits}`
         }
       } catch {}
