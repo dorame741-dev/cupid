@@ -141,13 +141,13 @@ export default function ObrigadoPage() {
 
           {/* link de edição */}
           <div style={{ padding: '14px 16px' }}>
-            <p style={{ ...S.linkLabel, color: 'rgba(232,121,249,0.55)' }}>Link para editar</p>
+            <p style={S.linkLabel}>Link para editar</p>
             <div style={S.linkRow}>
-              <span style={{ ...S.linkText, color: 'rgba(232,121,249,0.75)', fontSize: 12 }} title={editUrl}>{editUrl.replace('https://', '')}</span>
-              <button style={{ ...S.iconBtn, color: 'rgba(232,121,249,0.75)' }} onClick={() => copy(editUrl, setCopiedEdit)} title="Copiar link de edição">
+              <span style={S.linkText} title={editUrl}>{editUrl.replace('https://', '')}</span>
+              <button style={S.iconBtn} onClick={() => copy(editUrl, setCopiedEdit)} title="Copiar link de edição">
                 {copiedEdit ? <Check size={15} color="#4ade80" /> : <Copy size={15} />}
               </button>
-              <a href={editUrl} style={{ ...S.iconBtn, color: 'rgba(232,121,249,0.75)', textDecoration: 'none', display: 'flex', alignItems: 'center' }} title="Abrir edição">
+              <a href={editUrl} target="_blank" rel="noreferrer" style={{ ...S.iconBtn, textDecoration: 'none', display: 'flex', alignItems: 'center' }} title="Abrir edição">
                 <Pencil size={14} />
               </a>
             </div>
