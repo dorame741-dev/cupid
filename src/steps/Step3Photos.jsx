@@ -13,7 +13,7 @@ export default function Step3Photos({ onNext, onBack }) {
   const [showPreview, setShowPreview] = useState(false)
   const inputRef = useRef(null)
 
-  if (showPreview) return <SitePreview onBack={() => setShowPreview(false)} />
+  if (showPreview) return <SitePreview overlay onBack={() => setShowPreview(false)} />
 
   const handleFiles = (e) => {
     const files = Array.from(e.target.files)

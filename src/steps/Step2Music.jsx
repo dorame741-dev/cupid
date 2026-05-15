@@ -15,7 +15,7 @@ export default function Step2Music({ onNext, onBack }) {
   const [showPreview, setShowPreview] = useState(false)
   const debounceRef = useRef(null)
 
-  if (showPreview) return <SitePreview onBack={() => setShowPreview(false)} />
+  if (showPreview) return <SitePreview overlay onBack={() => setShowPreview(false)} />
 
   const handleSearch = (val) => {
     setQuery(val)

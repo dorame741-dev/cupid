@@ -9,7 +9,7 @@ export default function Step5CoverPhoto({ onNext, onBack }) {
   const [showPreview, setShowPreview] = useState(false)
   const inputRef = useRef(null)
 
-  if (showPreview) return <SitePreview onBack={() => setShowPreview(false)} />
+  if (showPreview) return <SitePreview overlay onBack={() => setShowPreview(false)} />
 
   const handleFile = (e) => {
     const file = e.target.files[0]

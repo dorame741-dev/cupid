@@ -23,7 +23,7 @@ export default function Step4Message({ onNext, onBack }) {
 
   useEffect(() => () => clearInterval(timerRef.current), [])
 
-  if (showPreview) return <SitePreview onBack={() => setShowPreview(false)} />
+  if (showPreview) return <SitePreview overlay onBack={() => setShowPreview(false)} />
 
   const handleAudioFile = (e) => {
     const file = e.target.files[0]

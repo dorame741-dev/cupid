@@ -14,7 +14,7 @@ export default function Step1Title({ onNext, onBack }) {
   const [showPreview, setShowPreview] = useState(false)
   const [expanded, setExpanded] = useState(false)
 
-  if (showPreview) return <SitePreview onBack={() => setShowPreview(false)} />
+  if (showPreview) return <SitePreview overlay onBack={() => setShowPreview(false)} />
 
   return (
     <div className="step-root">

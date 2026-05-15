@@ -299,7 +299,7 @@ const HEART_DEFS = [
 ]
 
 /* ─── Main preview ──────────────────────────────────────────── */
-export default function SitePreview({ onBack, externalData }) {
+export default function SitePreview({ onBack, externalData, overlay }) {
   const { data: ctxData } = useQuiz()
   const data = externalData || ctxData
   const [msgOpen, setMsgOpen] = useState(false)
@@ -311,8 +311,12 @@ export default function SitePreview({ onBack, externalData }) {
     <MessageFull message={data.message} audio={data.audio} onClose={() => setMsgOpen(false)} />
   )
 
+  const overlayStyle = overlay
+    ? { position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column' }
+    : {}
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative" style={{ background: BG_BLACK }}>
+    <div className="flex-1 flex flex-col overflow-hidden relative" style={{ background: BG_BLACK, ...overlayStyle }}>
 
       {/* ── header (always visible, black) ── */}
       <div className="flex items-center justify-between px-4 py-3 shrink-0"

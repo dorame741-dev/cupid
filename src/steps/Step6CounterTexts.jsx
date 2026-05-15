@@ -43,7 +43,7 @@ export default function Step6CounterTexts({ onNext, onBack }) {
   const { data, update } = useQuiz()
   const [showPreview, setShowPreview] = useState(false)
 
-  if (showPreview) return <SitePreview onBack={() => setShowPreview(false)} />
+  if (showPreview) return <SitePreview overlay onBack={() => setShowPreview(false)} />
 
   const ct = data.counterTexts
   const coupleName = ct.coupleName || `${data.myName} e ${data.partnerName}`
