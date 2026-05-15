@@ -655,17 +655,24 @@ export default function AdminPanel() {
   const totalPaid = sites.filter(s=>s.paid).length
   const pageTitle = { dashboard:'Dashboard', clients:'Clientes', settings:'Configurações' }[nav]
 
+  const rootStyle = {
+    position:'fixed', inset:0, overflowY:'auto',
+    background:C.bg, color:C.text,
+    fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  }
+
   if (loading) return (
-    <div style={{ minHeight:'100vh', background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', color:C.muted, fontFamily:'system-ui, sans-serif' }}>
+    <div style={{ ...rootStyle, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ textAlign:'center' }}>
         <div style={{ width:40, height:40, border:`3px solid ${C.border}`, borderTop:`3px solid ${C.purple}`, borderRadius:'50%', margin:'0 auto 16px', animation:'spin 1s linear infinite' }} />
-        <p style={{ margin:0, fontSize:14 }}>Carregando painel…</p>
+        <p style={{ margin:0, fontSize:14, color:C.muted }}>Carregando painel…</p>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 
   if (error) return (
-    <div style={{ minHeight:'100vh', background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'system-ui, sans-serif' }}>
+    <div style={{ ...rootStyle, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:C.surface, borderRadius:20, padding:40, maxWidth:500, textAlign:'center', border:`1px solid ${C.red}30` }}>
         <p style={{ color:C.red, fontWeight:800, fontSize:18, marginBottom:12 }}>Banco de dados não configurado</p>
         <p style={{ color:C.soft, fontSize:13, lineHeight:1.8, marginBottom:20 }}>Acesse <strong style={{color:C.purpleL}}>Vercel → Settings → Environment Variables</strong> e adicione:</p>
@@ -678,7 +685,7 @@ export default function AdminPanel() {
   )
 
   return (
-    <div style={{ minHeight:'100vh', background:C.bg, color:C.text, fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+    <div style={rootStyle}>
       <Sidebar active={nav} setActive={setNav} onLogout={handleLogout} />
 
       {/* main */}
