@@ -123,28 +123,34 @@ export default function ObrigadoPage() {
         </h1>
         <p style={S.sub}>O site personalizado está pronto e disponível para ser compartilhado.</p>
 
-        {/* link do presente */}
-        <div style={S.linkBox}>
-          <p style={S.linkLabel}>Link do presente</p>
-          <div style={S.linkRow}>
-            <span style={S.linkText} title={siteUrl}>{siteUrl.replace('https://', '')}</span>
-            <button style={S.iconBtn} onClick={() => copy(siteUrl, setCopied)} title="Copiar link">
-              {copied ? <Check size={15} color="#4ade80" /> : <Copy size={15} />}
-            </button>
+        {/* links card */}
+        <div style={{ ...S.linkBox, marginBottom: 24, padding: 0, overflow: 'hidden' }}>
+          {/* link do presente */}
+          <div style={{ padding: '14px 16px' }}>
+            <p style={S.linkLabel}>Link do presente</p>
+            <div style={S.linkRow}>
+              <span style={S.linkText} title={siteUrl}>{siteUrl.replace('https://', '')}</span>
+              <button style={S.iconBtn} onClick={() => copy(siteUrl, setCopied)} title="Copiar link">
+                {copied ? <Check size={15} color="#4ade80" /> : <Copy size={15} />}
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* link de edição */}
-        <div style={{ ...S.linkBox, marginTop: -12, marginBottom: 24, borderTop: '1px solid rgba(255,255,255,0.08)', borderRadius: '0 0 14px 14px', borderTopLeftRadius: 0, borderTopRightRadius: 0, paddingTop: 12 }}>
-          <p style={{ ...S.linkLabel, color: 'rgba(232,121,249,0.6)' }}>Link para editar</p>
-          <div style={S.linkRow}>
-            <span style={{ ...S.linkText, color: 'rgba(232,121,249,0.7)', fontSize: 12 }} title={editUrl}>{editUrl.replace('https://', '')}</span>
-            <button style={{ ...S.iconBtn, color: 'rgba(232,121,249,0.7)' }} onClick={() => copy(editUrl, setCopiedEdit)} title="Copiar link de edição">
-              {copiedEdit ? <Check size={15} color="#4ade80" /> : <Copy size={15} />}
-            </button>
-            <a href={editUrl} style={{ ...S.iconBtn, color: 'rgba(232,121,249,0.7)', textDecoration: 'none', display: 'flex', alignItems: 'center' }} title="Abrir edição">
-              <Pencil size={14} />
-            </a>
+          {/* divisória */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '0 16px' }} />
+
+          {/* link de edição */}
+          <div style={{ padding: '14px 16px' }}>
+            <p style={{ ...S.linkLabel, color: 'rgba(232,121,249,0.55)' }}>Link para editar</p>
+            <div style={S.linkRow}>
+              <span style={{ ...S.linkText, color: 'rgba(232,121,249,0.75)', fontSize: 12 }} title={editUrl}>{editUrl.replace('https://', '')}</span>
+              <button style={{ ...S.iconBtn, color: 'rgba(232,121,249,0.75)' }} onClick={() => copy(editUrl, setCopiedEdit)} title="Copiar link de edição">
+                {copiedEdit ? <Check size={15} color="#4ade80" /> : <Copy size={15} />}
+              </button>
+              <a href={editUrl} style={{ ...S.iconBtn, color: 'rgba(232,121,249,0.75)', textDecoration: 'none', display: 'flex', alignItems: 'center' }} title="Abrir edição">
+                <Pencil size={14} />
+              </a>
+            </div>
           </div>
         </div>
 
