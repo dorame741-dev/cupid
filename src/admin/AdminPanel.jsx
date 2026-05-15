@@ -4,9 +4,9 @@ import {
   DollarSign, ShoppingCart, Percent, RefreshCw, Copy, Check,
   ChevronRight, Calendar, Star, Camera, Gamepad2, Globe, Gift,
   MessageCircle, ExternalLink, Pencil, Search,
-  Tv2, Link2, Package,
+  Tv2, Link2, Package, Sparkles,
 } from 'lucide-react'
-import { getAllSites, getAppConfig, setAppConfig, createFreeLink, getFunnelEvents } from '../lib/supabase'
+import { getAllSites, getAppConfig, setAppConfig, createFreeLink, getFunnelEvents, getSite } from '../lib/supabase'
 
 /* ── palette ───────────────────────────────────────────────────── */
 const C = {
@@ -806,12 +806,187 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
   )
 }
 
+/* ── Demo Tab ───────────────────────────────────────────────────── */
+function DemoTab() {
+  const [demo,    setDemo]    = useState(undefined) // undefined=loading, null=não existe, obj=existe
+  const [loading, setLoading] = useState(true)
+  const [copied,  setCopied]  = useState(false)
+  const origin   = window.location.origin
+  const demoUrl  = `${origin}/demo`
+
+  useEffect(() => {
+    getSite('demo')
+      .then(d => { setDemo(d || null); setLoading(false) })
+      .catch(() => { setDemo(null); setLoading(false) })
+  }, [])
+
+  const handleEdit = () => {
+    const quizData = demo?.quiz_data
+    sessionStorage.setItem('demoMode', 'true')
+    if (quizData && Object.keys(quizData).length > 0 && !quizData.freeLink) {
+      sessionStorage.setItem('editData', JSON.stringify(quizData))
+    }
+    window.location.href = '/'
+  }
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(demoUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
+
+  const card     = { background:C.card, borderRadius:18, border:`1px solid ${C.border}`, padding:28 }
+  const lbl      = { margin:'0 0 6px', fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1, display:'block' }
+  const linkBox  = { display:'flex', alignItems:'center', gap:8, background:C.surface, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 14px', marginBottom:8 }
+
+  if (loading) return (
+    <div style={{ ...card, display:'flex', alignItems:'center', justifyContent:'center', padding:48 }}>
+      <div style={{ width:32, height:32, border:`3px solid ${C.border}`, borderTop:`3px solid ${C.purple}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+    </div>
+  )
+
+  const qd      = demo?.quiz_data || {}
+  const couple  = [qd.myName, qd.partnerName].filter(Boolean).join(' & ')
+  const hasDemo = Boolean(demo && !demo.quiz_data?.freeLink)
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20, maxWidth:900 }}>
+
+      {/* status + actions */}
+      <div style={{ ...card, borderColor: hasDemo ? `${C.purple}30` : C.border }}>
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
+          <div>
+            <p style={{ margin:'0 0 6px', fontSize:17, fontWeight:900, color:C.text, letterSpacing:-0.3 }}>
+              {hasDemo ? '✅ Demonstração ativa' : '⚪ Nenhuma demonstração criada'}
+            </p>
+            <p style={{ margin:0, fontSize:13, color:C.muted, lineHeight:1.6 }}>
+              {hasDemo
+                ? `Casal: ${couple || '—'} · Título: "${qd.title || '(sem título)'}" · Link público: ${demoUrl}`
+                : 'Crie uma demonstração para mostrar como o presente funciona antes de o cliente comprar.'}
+            </p>
+          </div>
+          <button onClick={handleEdit} style={{
+            display:'flex', alignItems:'center', gap:8,
+            background:`${C.purple}18`, border:`1.5px solid ${C.purple}35`, color:C.purpleL,
+            borderRadius:12, padding:'11px 22px', cursor:'pointer', fontSize:14, fontWeight:700,
+            whiteSpace:'nowrap', transition:'all 0.15s', flexShrink:0,
+          }}
+            onMouseEnter={e=>e.currentTarget.style.background=`${C.purple}30`}
+            onMouseLeave={e=>e.currentTarget.style.background=`${C.purple}18`}
+          >
+            <Sparkles size={16} />
+            {hasDemo ? 'Editar demonstração' : 'Criar demonstração'}
+          </button>
+        </div>
+
+        {hasDemo && (
+          <div style={{ marginTop:20 }}>
+            <span style={lbl}>Link público da demonstração</span>
+            <div style={linkBox}>
+              <span style={{ flex:1, fontSize:13, color:C.soft, fontFamily:'monospace' }}>{demoUrl}</span>
+              <button onClick={copyLink} style={{
+                background: copied ? `${C.green}18` : `${C.purple}12`,
+                border: `1px solid ${copied ? C.green : C.purple}28`,
+                color: copied ? C.green : C.purpleL,
+                borderRadius:8, padding:'5px 12px', cursor:'pointer', fontSize:12, fontWeight:700,
+                display:'flex', alignItems:'center', gap:5, transition:'all 0.15s', flexShrink:0,
+              }}>
+                {copied ? <><Check size={12} /> Copiado!</> : <><Copy size={12} /> Copiar</>}
+              </button>
+              <a href={demoUrl} target="_blank" rel="noopener noreferrer" style={{
+                background:`${C.purple}12`, border:`1px solid ${C.purple}28`, color:C.purpleL,
+                borderRadius:8, padding:'5px 12px', textDecoration:'none', fontSize:12, fontWeight:700,
+                display:'flex', alignItems:'center', gap:5, flexShrink:0,
+              }}>
+                <ExternalLink size={12} /> Abrir
+              </a>
+            </div>
+            <p style={{ margin:'6px 0 0', fontSize:11, color:C.muted }}>
+              Compartilhe este link com potenciais clientes para mostrarem como o presente funciona. Não precisa pagar para ver.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* phone preview + info */}
+      {hasDemo && (
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', gap:20, alignItems:'start' }}>
+
+          {/* info card */}
+          <div style={card}>
+            <p style={{ margin:'0 0 18px', fontSize:14, fontWeight:800, color:C.text }}>Conteúdo atual da demonstração</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {[
+                ['👫 Casal', couple || '—'],
+                ['✏️ Título', qd.title || '—'],
+                ['📅 Data do relacionamento', qd.relationshipStart || '—'],
+                ['💌 Mensagem', qd.message ? qd.message.slice(0,80) + (qd.message.length>80?'…':'') : '—'],
+                ['🎁 Seções extras', qd.wrappedSections?.length ? qd.wrappedSections.join(', ') : 'Nenhuma'],
+                ['🖼️ Fotos', qd.photos?.length ? `${qd.photos.length} foto${qd.photos.length!==1?'s':''}` : '—'],
+              ].map(([k,v]) => (
+                <div key={k} style={{ display:'flex', gap:12, padding:'10px 0', borderBottom:`1px solid ${C.border}` }}>
+                  <span style={{ fontSize:12, color:C.muted, width:170, flexShrink:0 }}>{k}</span>
+                  <span style={{ fontSize:12, color:C.soft, flex:1 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={handleEdit} style={{
+              marginTop:20, width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              background:`${C.purple}18`, border:`1.5px solid ${C.purple}35`, color:C.purpleL,
+              borderRadius:12, padding:'12px', cursor:'pointer', fontSize:14, fontWeight:700, transition:'all 0.15s',
+            }}
+              onMouseEnter={e=>e.currentTarget.style.background=`${C.purple}30`}
+              onMouseLeave={e=>e.currentTarget.style.background=`${C.purple}18`}
+            >
+              <Pencil size={15} /> Editar conteúdo
+            </button>
+          </div>
+
+          {/* phone preview */}
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+            <p style={{ margin:0, fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }}>Prévia do site demo</p>
+            <div style={{
+              width:240, height:500, background:'#1a1a2e', borderRadius:36,
+              padding:'10px 6px', border:`2px solid ${C.border}`,
+              boxShadow:`0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px #2a2a42`,
+            }}>
+              <div style={{ width:60, height:5, background:'#2a2a42', borderRadius:3, margin:'0 auto 8px' }} />
+              <iframe src={demoUrl} title="Demonstração" style={{ width:'100%', height:'calc(100% - 22px)', border:'none', borderRadius:28, display:'block' }} />
+            </div>
+            <p style={{ margin:0, fontSize:10, color:C.muted, textAlign:'center' }}>Isso é o que o cliente vê ao abrir o link demo</p>
+          </div>
+        </div>
+      )}
+
+      {/* how it works */}
+      <div style={{ background:`${C.purple}08`, border:`1px solid ${C.purple}20`, borderRadius:16, padding:20 }}>
+        <p style={{ margin:'0 0 12px', fontSize:13, fontWeight:800, color:C.purpleL }}>Como funciona</p>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {[
+            ['1', 'Clique em "Criar/Editar demonstração" — o quiz abre normalmente'],
+            ['2', 'Preencha com dados fictícios de um casal de exemplo (fotos, nome, música, etc.)'],
+            ['3', 'Na última etapa, ao invés de PIX aparece um botão "Salvar como demonstração"'],
+            ['4', 'O site fica disponível em /demo para qualquer pessoa ver sem pagar'],
+            ['5', 'Compartilhe o link /demo nas suas redes sociais ou com clientes interessados'],
+          ].map(([n, t]) => (
+            <div key={n} style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+              <div style={{ width:22, height:22, borderRadius:'50%', background:`${C.purple}30`, border:`1px solid ${C.purple}50`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
+                <span style={{ fontSize:10, fontWeight:900, color:C.purpleL }}>{n}</span>
+              </div>
+              <p style={{ margin:0, fontSize:12, color:C.soft, lineHeight:1.6 }}>{t}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── Settings sub-tabs ──────────────────────────────────────────── */
 function SettingsTabs({ active, setActive }) {
   const tabs = [
-    { id:'produto', label:'Produto',    Icon: Package },
-    { id:'pixel',   label:'Pixels & APIs', Icon: Tv2 },
-    { id:'links',   label:'Links',      Icon: Link2 },
+    { id:'produto',  label:'Produto',       Icon: Package },
+    { id:'pixel',    label:'Pixels & APIs', Icon: Tv2 },
+    { id:'links',    label:'Links',         Icon: Link2 },
+    { id:'demo',     label:'Demonstração',  Icon: Sparkles },
   ]
   return (
     <div style={{ display:'flex', gap:6, marginBottom:24, borderBottom:`1px solid ${C.border}`, paddingBottom:0 }}>
@@ -1007,6 +1182,9 @@ function SettingsView({ price, onPriceChange }) {
           </div>
         </div>
       )}
+
+      {/* ── Demo ── */}
+      {tab === 'demo' && <DemoTab />}
 
       {/* ── Links ── */}
       {tab === 'links' && (

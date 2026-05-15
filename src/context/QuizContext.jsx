@@ -42,10 +42,13 @@ const DEFAULT_DATA = {
 
 function loadInitialData() {
   try {
-    const saved = sessionStorage.getItem('editData')
-    if (saved) {
+    const saved    = sessionStorage.getItem('editData')
+    const isDemo   = sessionStorage.getItem('demoMode') === 'true'
+    if (saved || isDemo) {
       sessionStorage.removeItem('editData')
-      return { ...DEFAULT_DATA, ...JSON.parse(saved) }
+      sessionStorage.removeItem('demoMode')
+      const base = saved ? { ...DEFAULT_DATA, ...JSON.parse(saved) } : { ...DEFAULT_DATA }
+      return isDemo ? { ...base, __demoMode: true } : base
     }
   } catch {}
   return DEFAULT_DATA

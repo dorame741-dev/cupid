@@ -354,8 +354,11 @@ export default function StepPagamento({ onNext, onBack }) {
   const totalStr = `R$ ${total.toFixed(2).replace('.', ',')}`
   const cents    = Math.round(total * 100)
 
+  const isDemoMode  = Boolean(data.__demoMode)
   const partnerName = data.partnerName || 'ela'
-  const siteUrl = waValid ? `${window.location.origin}/${digits}` : ''
+  const siteUrl     = isDemoMode
+    ? `${window.location.origin}/demo`
+    : waValid ? `${window.location.origin}/${digits}` : ''
 
   useEffect(() => {
     const p = { value: BASE_PRICE, currency: 'BRL', content_name: 'Presente de Casal' }
@@ -493,7 +496,54 @@ export default function StepPagamento({ onNext, onBack }) {
   )
 
   /* ── success ── */
-  if (screen === 'success') return <SuccessScreen partnerName={partnerName} siteUrl={siteUrl} digits={digits} selectedQR={selectedQR} onNext={onNext} />
+  if (screen === 'success') return <SuccessScreen partnerName={partnerName} siteUrl={siteUrl} digits={isDemoMode ? 'demo' : digits} selectedQR={selectedQR} onNext={onNext} />
+
+  /* ── demo bypass (skip PIX) ── */
+  if (isDemoMode) return (
+    <div className="step-root" style={{ background: '#f8f5ff' }}>
+      <div className="step-scroll flex flex-col items-center justify-center gap-6 px-6 pb-12 text-center">
+        <div style={{ fontSize: 56 }}>🎯</div>
+        <div>
+          <p className="text-[22px] font-black text-gray-900">Salvar Demonstração</p>
+          <p className="text-[14px] text-gray-500 mt-2 leading-relaxed">
+            O site ficará disponível em <strong style={{ color: '#7c3aed' }}>/demo</strong> para qualquer pessoa visualizar como exemplo.
+          </p>
+        </div>
+        <div className="w-full bg-white border border-gray-200 rounded-2xl p-4 text-left" style={{ maxWidth: 360 }}>
+          <p className="text-[10px] font-bold text-purple-500 tracking-widest mb-3">RESUMO DA DEMONSTRAÇÃO</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-[13px] text-gray-700">👫 Casal: <strong>{[data.myName, data.partnerName].filter(Boolean).join(' & ') || '—'}</strong></p>
+            <p className="text-[13px] text-gray-700">✏️ Título: <strong>{data.title || '(sem título)'}</strong></p>
+            <p className="text-[13px] text-gray-700">📅 Data: <strong>{data.relationshipStart || '—'}</strong></p>
+            {data.wrappedSections?.length > 0 && (
+              <p className="text-[13px] text-gray-700">🎁 Seções: <strong>{data.wrappedSections.length} extra{data.wrappedSections.length !== 1 ? 's' : ''}</strong></p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={async () => {
+            setScreen('loading')
+            try {
+              const quizData = await buildQuizData()
+              await saveSite('demo', quizData)
+              await markPaid('demo').catch(() => {})
+              setScreen('success')
+            } catch {
+              setErrMsg('Erro ao salvar demonstração. Verifique o Supabase.')
+              setScreen('error')
+            }
+          }}
+          className="w-full bg-purple-600 text-white rounded-2xl py-4 font-black text-[16px] active:scale-[0.98] transition-all"
+          style={{ maxWidth: 360 }}
+        >
+          💾 Salvar como demonstração
+        </button>
+        <button onClick={onBack} className="text-[13px] text-gray-400 underline">
+          ← Voltar e editar mais
+        </button>
+      </div>
+    </div>
+  )
 
   /* ════════════ FORMULÁRIO ════════════ */
   return (
