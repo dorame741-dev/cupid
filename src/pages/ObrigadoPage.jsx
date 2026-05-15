@@ -36,8 +36,9 @@ export default function ObrigadoPage() {
       .catch(() => setStatus('error'))
   }, [phone])
 
+  const obrigadoUrl = `${origin}/obrigado/${phone}`
   const waText = encodeURIComponent(
-    `💕 Aqui está o seu presente especial!\n\nClique no link abaixo para abrir:\n${siteUrl}\n\nFeito com muito amor 💝`
+    `💕 Aqui está o seu presente especial!\n\n🎁 Abrir presente:\n${siteUrl}\n\n✏️ Editar presente:\n${editUrl}\n\n📥 Baixar QR Code:\n${obrigadoUrl}\n\nFeito com muito amor 💝`
   )
   const waUrl = `https://wa.me/?text=${waText}`
 
