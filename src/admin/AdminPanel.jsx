@@ -87,7 +87,20 @@ export default function AdminPanel() {
 
         {/* table */}
         {loading && <p style={{ color: '#6b7280', textAlign: 'center', padding: 40 }}>Carregando...</p>}
-        {error  && <p style={{ color: '#ef4444', textAlign: 'center', padding: 40 }}>Erro: {error}</p>}
+        {error && (
+          <div style={{ background: '#1a1a24', border: '1px solid #ef444430', borderRadius: 16, padding: 32, textAlign: 'center' }}>
+            <p style={{ color: '#ef4444', fontWeight: 700, fontSize: 15, marginBottom: 12 }}>Erro ao conectar ao banco de dados</p>
+            <p style={{ color: '#9ca3af', fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>
+              As variáveis do Supabase não estão configuradas no Vercel.<br />
+              Acesse <strong style={{ color: '#a78bfa' }}>Vercel → Settings → Environment Variables</strong> e adicione:
+            </p>
+            <div style={{ background: '#0f0f13', borderRadius: 10, padding: '12px 16px', textAlign: 'left', display: 'inline-block', fontFamily: 'monospace', fontSize: 12, color: '#86efac', lineHeight: 2 }}>
+              VITE_SUPABASE_URL = sua_url_do_supabase<br />
+              VITE_SUPABASE_ANON_KEY = sua_chave_anon
+            </div>
+            <p style={{ color: '#6b7280', fontSize: 12, marginTop: 12 }}>Após adicionar, faça um novo deploy no Vercel.</p>
+          </div>
+        )}
 
         {!loading && !error && (
           <div style={{ background: '#1a1a24', borderRadius: 16, overflow: 'hidden', border: '1px solid #2d2d3d' }}>
