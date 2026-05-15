@@ -46,11 +46,50 @@ export default function SitePage() {
     </div>
   )
 
+  const isDemo = phone === 'demo'
+
   return (
     <div style={{ width: '100%', minHeight: '100vh', background: '#030308', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 430, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <SitePreview externalData={quizData} />
       </div>
+
+      {isDemo && (
+        <>
+          <style>{`
+            @keyframes demoPulse {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55), 0 8px 32px rgba(34,197,94,0.4); transform: scale(1); }
+              50% { box-shadow: 0 0 0 14px rgba(34,197,94,0), 0 8px 40px rgba(34,197,94,0.5); transform: scale(1.04); }
+            }
+          `}</style>
+          <a
+            href="/"
+            style={{
+              position: 'fixed',
+              bottom: 28,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              background: 'linear-gradient(135deg, #16a34a, #15803d)',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: 16,
+              textDecoration: 'none',
+              borderRadius: 99,
+              padding: '16px 32px',
+              whiteSpace: 'nowrap',
+              animation: 'demoPulse 2s ease-in-out infinite',
+              border: '2px solid rgba(255,255,255,0.25)',
+            }}
+          >
+            💝 Cria Meu Site Agora
+          </a>
+        </>
+      )}
     </div>
   )
 }

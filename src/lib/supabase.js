@@ -38,6 +38,16 @@ export async function saveSite(phone, quizData) {
   return data
 }
 
+// Update only quiz_data without touching paid status (for edits)
+export async function updateSiteData(phone, quizData) {
+  if (!supabase) throw new Error('Supabase não configurado')
+  const { error } = await supabase
+    .from('sites')
+    .update({ quiz_data: quizData })
+    .eq('phone', phone)
+  if (error) throw error
+}
+
 // Mark a site as paid
 export async function markPaid(phone) {
   if (!supabase) throw new Error('Supabase não configurado')

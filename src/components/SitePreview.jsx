@@ -444,20 +444,22 @@ export default function SitePreview({ onBack, externalData, overlay }) {
 
       </div>
 
-      <div className="shrink-0 flex justify-center px-4 pt-3"
-        style={{
-          background: 'rgba(3,3,8,0.95)',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          backdropFilter: 'blur(8px)',
-          paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-          position: 'relative',
-          zIndex: 50,
-        }}>
-        <button onClick={onBack}
-          className="bg-purple-600 text-white rounded-full px-8 py-2.5 font-bold text-[14px] active:scale-95 transition-all btn-pulse">
-          ‹ Voltar a Editar
-        </button>
-      </div>
+      {onBack && (
+        <div className="shrink-0 flex justify-center px-4 pt-3"
+          style={{
+            background: 'rgba(3,3,8,0.95)',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(8px)',
+            paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+            position: 'relative',
+            zIndex: 50,
+          }}>
+          <button onClick={onBack}
+            className="bg-purple-600 text-white rounded-full px-8 py-2.5 font-bold text-[14px] active:scale-95 transition-all btn-pulse">
+            ‹ Voltar a Editar
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQuiz } from '../context/QuizContext'
 import { ChevronDown, ChevronUp, Shield, Lock, RefreshCw, Copy, Check, Loader } from 'lucide-react'
-import { saveSite, markPaid, uploadFromPreview, getAppConfig } from '../lib/supabase'
+import { saveSite, markPaid, updateSiteData, uploadFromPreview, getAppConfig } from '../lib/supabase'
 
 const BASE_PRICE = 19.90
 const QR_EXTRA   = 4.90
@@ -355,12 +355,16 @@ export default function StepPagamento({ onNext, onBack }) {
   const cents    = Math.round(total * 100)
 
   const isDemoMode  = Boolean(data.__demoMode)
+  const isEditMode  = Boolean(data.__editPhone)
+  const editPhone   = data.__editPhone || ''
   const partnerName = data.partnerName || 'ela'
   const siteUrl     = isDemoMode
     ? `${window.location.origin}/demo`
+    : isEditMode ? `${window.location.origin}/${editPhone}`
     : waValid ? `${window.location.origin}/${digits}` : ''
 
   useEffect(() => {
+    if (isEditMode) return // não dispara pixel em edição
     const p = { value: BASE_PRICE, currency: 'BRL', content_name: 'Presente de Casal' }
     firePixel('InitiateCheckout', p)
     fireCAPI('InitiateCheckout', { ...p, num_items: 1 })
@@ -537,6 +541,55 @@ export default function StepPagamento({ onNext, onBack }) {
           style={{ maxWidth: 360 }}
         >
           💾 Salvar como demonstração
+        </button>
+        <button onClick={onBack} className="text-[13px] text-gray-400 underline">
+          ← Voltar e editar mais
+        </button>
+      </div>
+    </div>
+  )
+
+  /* ── edit bypass (skip PIX, just re-save) ── */
+  if (isEditMode) return (
+    <div className="step-root" style={{ background: '#f8f5ff' }}>
+      <div className="step-scroll flex flex-col items-center justify-center gap-6 px-6 pb-12 text-center">
+        <div style={{ fontSize: 56 }}>✏️</div>
+        <div>
+          <p className="text-[22px] font-black text-gray-900">Salvar Alterações</p>
+          <p className="text-[14px] text-gray-500 mt-2 leading-relaxed">
+            As mudanças serão aplicadas ao link existente.<br />
+            <strong style={{ color: '#7c3aed' }}>Nenhum pagamento adicional necessário.</strong>
+          </p>
+        </div>
+        <div className="w-full bg-white border border-gray-200 rounded-2xl p-4 text-left" style={{ maxWidth: 360 }}>
+          <p className="text-[10px] font-bold text-purple-500 tracking-widest mb-3">RESUMO</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-[13px] text-gray-700">📱 Link: <strong style={{ color: '#7c3aed' }}>{siteUrl}</strong></p>
+            <p className="text-[13px] text-gray-700">👫 Casal: <strong>{[data.myName, data.partnerName].filter(Boolean).join(' & ') || '—'}</strong></p>
+            <p className="text-[13px] text-gray-700">✏️ Título: <strong>{data.title || '(sem título)'}</strong></p>
+            <p className="text-[13px] text-gray-700">📅 Data: <strong>{data.relationshipStart || '—'}</strong></p>
+            {data.wrappedSections?.length > 0 && (
+              <p className="text-[13px] text-gray-700">🎁 Seções: <strong>{data.wrappedSections.length} extra{data.wrappedSections.length !== 1 ? 's' : ''}</strong></p>
+            )}
+          </div>
+        </div>
+        {errMsg && <p className="text-red-500 text-[13px]">{errMsg}</p>}
+        <button
+          onClick={async () => {
+            setScreen('loading')
+            try {
+              const quizData = await buildQuizData()
+              await updateSiteData(editPhone, quizData)
+              window.location.href = `/obrigado/${editPhone}`
+            } catch {
+              setErrMsg('Erro ao salvar. Verifique a conexão e tente novamente.')
+              setScreen('form')
+            }
+          }}
+          className="w-full bg-purple-600 text-white rounded-2xl py-4 font-black text-[16px] active:scale-[0.98] transition-all"
+          style={{ maxWidth: 360 }}
+        >
+          💾 Salvar alterações
         </button>
         <button onClick={onBack} className="text-[13px] text-gray-400 underline">
           ← Voltar e editar mais

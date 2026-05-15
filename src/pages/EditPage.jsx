@@ -9,9 +9,8 @@ export default function EditPage() {
   useEffect(() => {
     getSite(phone)
       .then(site => {
-        if (site?.quiz_data) {
-          sessionStorage.setItem('editData', JSON.stringify(site.quiz_data))
-        }
+        const base = site?.quiz_data || {}
+        sessionStorage.setItem('editData', JSON.stringify({ ...base, __editPhone: phone }))
         navigate('/', { replace: true })
       })
       .catch(() => navigate('/', { replace: true }))
