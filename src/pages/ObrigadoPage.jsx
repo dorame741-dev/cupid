@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSite } from '../lib/supabase'
 import { Check, Copy, ExternalLink, Download, Pencil } from 'lucide-react'
+import { SiteQRCard } from '../components/QRCard'
 
 function WaIcon() {
   return (
@@ -17,8 +18,6 @@ export default function ObrigadoPage() {
   const [status, setStatus] = useState('loading')
   const [copied, setCopied] = useState(false)
   const [copiedEdit, setCopiedEdit] = useState(false)
-  const [qrLoaded, setQrLoaded] = useState(false)
-  const qrRef = useRef(null)
 
   const origin  = window.location.origin
   const siteUrl = `${origin}/${phone}`
@@ -66,6 +65,7 @@ export default function ObrigadoPage() {
 
   const partnerName = site?.quiz_data?.partnerName || ''
   const myName      = site?.quiz_data?.myName || ''
+  const qrTemplate  = site?.quiz_data?.qrTemplate ?? 0
 
   /* ── loading ── */
   if (status === 'loading') return (
@@ -157,18 +157,9 @@ export default function ObrigadoPage() {
 
         {/* QR code */}
         <div style={S.qrWrap}>
-          <img
-            ref={qrRef}
-            src={qrSrc}
-            alt="QR Code"
-            width={160}
-            height={160}
-            style={S.qr}
-            onLoad={() => setQrLoaded(true)}
-            crossOrigin="anonymous"
-          />
+          <SiteQRCard style={qrTemplate} siteUrl={siteUrl} />
           <p style={S.qrLabel}>Aponte a câmera para abrir</p>
-          <button style={S.downloadBtn} onClick={downloadQR} disabled={!qrLoaded}>
+          <button style={S.downloadBtn} onClick={downloadQR}>
             <Download size={15} />
             Baixar QR Code
           </button>
@@ -294,11 +285,6 @@ const S = {
     alignItems: 'center',
     gap: 10,
     marginBottom: 24,
-  },
-  qr: {
-    borderRadius: 14,
-    border: '3px solid rgba(255,255,255,0.15)',
-    display: 'block',
   },
   qrLabel: {
     color: 'rgba(255,255,255,0.4)',

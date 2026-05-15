@@ -6,7 +6,8 @@ import {
   MessageCircle, ExternalLink, Pencil, Search,
   Tv2, Link2, Package, Sparkles,
 } from 'lucide-react'
-import { getAllSites, getAppConfig, setAppConfig, createFreeLink, getFunnelEvents, getSite } from '../lib/supabase'
+import { getAllSites, getAppConfig, setAppConfig, createFreeLink, getFunnelEvents, getSite, updateSiteData } from '../lib/supabase'
+import { QR_TEMPLATES, SiteQRCard } from '../components/QRCard'
 
 /* ── palette ───────────────────────────────────────────────────── */
 const C = {
@@ -516,6 +517,79 @@ function CopyBtn({ text, label = 'Copiar', icon: Icon = Copy, color = C.purpleL,
   )
 }
 
+/* ── QR Edit modal ──────────────────────────────────────────────── */
+function QREditModal({ site, onClose, onSaved }) {
+  const current = site.quiz_data?.qrTemplate ?? 0
+  const [selected, setSelected] = useState(current)
+  const [saving, setSaving] = useState(false)
+  const siteUrl = `${window.location.origin}/${site.phone}`
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await updateSiteData(site.phone, { ...site.quiz_data, qrTemplate: selected })
+      onSaved(selected)
+      onClose()
+    } catch {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{
+      position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', zIndex:400,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16,
+    }}>
+      <div style={{ background:C.card, borderRadius:20, width:'100%', maxWidth:540, border:`1px solid ${C.border}`, overflow:'hidden' }}>
+        {/* header */}
+        <div style={{ padding:'18px 24px 14px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div>
+            <p style={{ margin:0, fontSize:15, fontWeight:800, color:C.text }}>Editar QR Code</p>
+            <p style={{ margin:0, fontSize:12, color:C.muted, marginTop:2 }}>Escolha o modelo para este cliente</p>
+          </div>
+          <button onClick={onClose} style={{ background:`${C.red}12`, border:`1px solid ${C.red}25`, color:C.red, borderRadius:8, padding:'6px 12px', cursor:'pointer', fontSize:13, fontWeight:700 }}>✕</button>
+        </div>
+
+        {/* templates grid */}
+        <div style={{ padding:'20px 24px', display:'flex', flexDirection:'column', gap:20 }}>
+          <div style={{ display:'flex', gap:16, justifyContent:'center', flexWrap:'wrap' }}>
+            {QR_TEMPLATES.map(({ id, Component, label }) => (
+              <div key={id} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, cursor:'pointer' }} onClick={() => setSelected(id)}>
+                <div style={{
+                  borderRadius:16, padding:3,
+                  outline: selected===id ? `3px solid ${C.purple}` : '3px solid transparent',
+                  transition:'outline 0.15s',
+                }}>
+                  <Component />
+                </div>
+                <span style={{
+                  fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:99,
+                  background: selected===id ? C.purple : C.surface,
+                  color: selected===id ? '#fff' : C.muted,
+                  border: `1px solid ${selected===id ? C.purple : C.border}`,
+                }}>{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* preview */}
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+            <p style={{ margin:0, fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }}>Prévia</p>
+            <SiteQRCard style={selected} siteUrl={siteUrl} />
+          </div>
+
+          <button onClick={save} disabled={saving} style={{
+            width:'100%', background:C.purple, color:'#fff', fontWeight:800, fontSize:15,
+            borderRadius:12, padding:'13px', border:'none', cursor:'pointer', opacity: saving ? 0.6 : 1,
+          }}>
+            {saving ? 'Salvando…' : '💾 Salvar QR Code'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── Preview modal ──────────────────────────────────────────────── */
 function PreviewModal({ site, onClose }) {
   const origin    = window.location.origin
@@ -672,12 +746,14 @@ function PreviewModal({ site, onClose }) {
 
 /* ── Clients view ───────────────────────────────────────────────── */
 function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFrom, customTo, setCustomTo }) {
-  const [search,  setSearch]  = useState('')
-  const [filter,  setFilter]  = useState('all')
-  const [preview, setPreview] = useState(null) // site object
+  const [search,   setSearch]  = useState('')
+  const [filter,   setFilter]  = useState('all')
+  const [preview,  setPreview]  = useState(null)
+  const [qrEdit,   setQrEdit]   = useState(null) // site object for QR edit
+  const [sitesState, setSitesState] = useState(sites)
 
   const origin   = window.location.origin
-  const inPeriod = filterSites(sites, period, 'created_at', customFrom, customTo)
+  const inPeriod = filterSites(sitesState, period, 'created_at', customFrom, customTo)
   const filtered = inPeriod.filter(s => {
     const q        = search.toLowerCase()
     const name     = `${s.quiz_data?.myName||''} ${s.quiz_data?.partnerName||''}`.toLowerCase()
@@ -697,6 +773,9 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
       {preview && <PreviewModal site={preview} onClose={()=>setPreview(null)} />}
+      {qrEdit && <QREditModal site={qrEdit} onClose={()=>setQrEdit(null)} onSaved={(tpl) => {
+        setSitesState(prev => prev.map(s => s.phone===qrEdit.phone ? { ...s, quiz_data: { ...s.quiz_data, qrTemplate: tpl } } : s))
+      }} />}
 
       <PeriodBar period={period} setPeriod={setPeriod} customFrom={customFrom} setCustomFrom={setCustomFrom} customTo={customTo} setCustomTo={setCustomTo} />
 
@@ -801,6 +880,16 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
                     </a>
                     {/* Copy edit link */}
                     <CopyBtn text={edit} label="Editar" icon={Pencil} color={C.amber} bg={C.amber} small />
+                    {/* QR edit */}
+                    <button onClick={()=>setQrEdit(site)} title="Editar QR Code" style={{
+                      display:'flex', alignItems:'center', gap:4, background:`${C.green}12`, border:`1px solid ${C.green}28`, color:C.green,
+                      borderRadius:8, padding:'5px 9px', cursor:'pointer', fontSize:11, fontWeight:700, whiteSpace:'nowrap', flexShrink:0, transition:'all 0.15s',
+                    }}
+                      onMouseEnter={e=>e.currentTarget.style.background=`${C.green}22`}
+                      onMouseLeave={e=>e.currentTarget.style.background=`${C.green}12`}
+                    >
+                      <Gift size={12} /> QR
+                    </button>
                     {/* Preview modal */}
                     <button onClick={()=>setPreview(site)} title="Ver todos os links" style={{
                       display:'flex', alignItems:'center', gap:4, background:`${C.blue}12`, border:`1px solid ${C.blue}28`, color:C.blue,
