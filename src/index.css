@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #c4b5fd;
+}
+
+input, textarea, button, select { font-family: inherit; }
+
+.phone-shell {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  background: #ede9fe;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+@media (min-width: 640px) {
+  body, #root {
+    background: #c4b5fd;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 0 64px;
+    min-height: 100vh;
+  }
+  .phone-shell {
+    height: calc(100vh - 96px);
+    min-height: auto;
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(109,40,217,0.4), 0 0 0 1px rgba(109,40,217,0.2);
+  }
+}
+
+.phone-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.step-root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+  position: relative;
+}
+
+.step-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.step-bottom {
+  background: white;
+  border-top: 1px solid #f3f0ff;
+  padding: 12px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 -8px 24px rgba(109,40,217,0.06);
+}
+
+/* Pulsing glow for unlocked CTA button */
+@keyframes btn-glow {
+  0%, 100% { box-shadow: 0 8px 24px rgba(124,58,237,0.45); }
+  50%       { box-shadow: 0 8px 40px rgba(124,58,237,0.75), 0 0 0 6px rgba(124,58,237,0.12); }
+}
+.btn-pulse {
+  animation: btn-glow 2s ease-in-out infinite;
+}
+
+/* Photo carousel crossfade */
+.photo-fade-enter { opacity: 0; }
+.photo-fade-enter-active { opacity: 1; transition: opacity 0.8s ease; }
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.4;
+  cursor: pointer;
+}
+
+/* Spotify-style progress bar */
+.spotify-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: #555;
+  cursor: pointer;
+  outline: none;
+}
+.spotify-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.spotify-range:hover::-webkit-slider-thumb,
+.spotify-range:active::-webkit-slider-thumb {
+  opacity: 1;
+}
+.spotify-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  cursor: pointer;
+}
+
+/* Floating hearts background animation */
+@keyframes heartRise {
+  0%   { transform: translateY(0) scale(1) rotate(-8deg); opacity: 0; }
+  6%   { opacity: 0.85; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(-950px) scale(0.4) rotate(15deg); opacity: 0; }
+}
+.heart-rise {
+  position: absolute;
+  bottom: -20px;
+  animation: heartRise linear infinite;
+  user-select: none;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
