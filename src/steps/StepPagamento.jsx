@@ -102,7 +102,7 @@ function SiteQRCard({ style, siteUrl }) {
 
 /* ── PushinPay helpers ────────────────────────────────────────── */
 async function createPix(amountCents) {
-  const res = await fetch('/pushinpay/api/pix/cashIn', {
+  const res = await fetch('/api/pushinpay/api/pix/cashIn', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${TOKEN}`,
@@ -116,7 +116,7 @@ async function createPix(amountCents) {
 }
 
 async function checkPix(id) {
-  const res = await fetch(`/pushinpay/api/pix/cashIn/${id}`, {
+  const res = await fetch(`/api/pushinpay/api/pix/cashIn/${id}`, {
     headers: {
       'Authorization': `Bearer ${TOKEN}`,
       'Accept': 'application/json',

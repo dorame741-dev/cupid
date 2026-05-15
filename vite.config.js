@@ -6,10 +6,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/pushinpay': {
+      '/api/pushinpay': {
         target: 'https://api.pushinpay.com.br',
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/pushinpay/, ''),
+        rewrite: path => path.replace(/^\/api\/pushinpay/, ''),
       },
     },
   },
