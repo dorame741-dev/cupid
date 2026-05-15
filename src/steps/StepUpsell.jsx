@@ -1,5 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PandaMascot from '../components/PandaMascot'
+
+const SCREENSHOTS = [
+  { src: '/screenshots/roleta.png',   label: '🎯 Roleta do Casal' },
+  { src: '/screenshots/mapa.png',     label: '🗺️ Jornada no Mapa' },
+  { src: '/screenshots/timeline.png', label: '📸 Nossa Jornada' },
+  { src: '/screenshots/estrelas.png', label: '⭐ Mapa das Estrelas' },
+  { src: '/screenshots/palavras.png', label: '🟩 Jogo de Palavras' },
+  { src: '/screenshots/jogo.png',     label: '💑 Galeria do Casal' },
+]
 
 const faqs = [
   { q: 'Quanto custa o Wrapped?', a: 'Grátis! O Wrapped já está incluído no seu plano. São 8+ seções interativas animadas para transformar seu presente em algo que vai fazer a pessoa amada chorar de emoção.' },
@@ -8,6 +17,75 @@ const faqs = [
   { q: 'Posso adicionar depois?', a: 'Pode sim, pelo painel de edição após a compra. Mas adicionando agora você já configura tudo e visualiza uma prévia antes de enviar!' },
   { q: 'Funciona em qualquer celular?', a: 'Sim! Nossa tecnologia cria uma experiência fluida que funciona perfeitamente em qualquer celular, tablet ou computador.' },
 ]
+
+function PhoneMockup({ src, label }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0, width: 148 }}>
+      {/* phone frame */}
+      <div style={{
+        width: 148,
+        height: 300,
+        background: '#111',
+        borderRadius: 28,
+        padding: 6,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.35), 0 0 0 1.5px rgba(255,255,255,0.08), inset 0 0 0 1px rgba(255,255,255,0.04)',
+        position: 'relative',
+      }}>
+        {/* dynamic island */}
+        <div style={{
+          position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
+          width: 52, height: 10, background: '#000', borderRadius: 6, zIndex: 10,
+        }} />
+        {/* screen */}
+        <div style={{ width: '100%', height: '100%', borderRadius: 22, overflow: 'hidden', background: '#000' }}>
+          <img src={src} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+        </div>
+        {/* home bar */}
+        <div style={{
+          position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)',
+          width: 40, height: 3, background: 'rgba(255,255,255,0.25)', borderRadius: 2, zIndex: 10,
+        }} />
+        {/* side button */}
+        <div style={{
+          position: 'absolute', right: -3, top: 72, width: 3, height: 28,
+          background: '#222', borderRadius: '0 2px 2px 0',
+        }} />
+        {/* volume buttons */}
+        <div style={{ position: 'absolute', left: -3, top: 60, width: 3, height: 20, background: '#222', borderRadius: '2px 0 0 2px' }} />
+        <div style={{ position: 'absolute', left: -3, top: 86, width: 3, height: 20, background: '#222', borderRadius: '2px 0 0 2px' }} />
+      </div>
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#7C3AED', textAlign: 'center' }}>{label}</span>
+    </div>
+  )
+}
+
+function PhoneCarousel() {
+  const [idx, setIdx] = useState(0)
+
+  useEffect(() => {
+    const t = setInterval(() => setIdx(i => (i + 1) % SCREENSHOTS.length), 2800)
+    return () => clearInterval(t)
+  }, [])
+
+  const s = SCREENSHOTS[idx]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <PhoneMockup src={s.src} label={s.label} />
+      {/* dots */}
+      <div style={{ display: 'flex', gap: 5 }}>
+        {SCREENSHOTS.map((_, i) => (
+          <button key={i} onClick={() => setIdx(i)} style={{
+            width: i === idx ? 18 : 6, height: 6,
+            borderRadius: 3, border: 'none', cursor: 'pointer', padding: 0,
+            background: i === idx ? '#7C3AED' : '#E5E7EB',
+            transition: 'width 0.3s ease, background 0.3s ease',
+          }} />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function StepUpsell({ onAccept, onDecline }) {
   const [openFaq, setOpenFaq] = useState(null)
@@ -35,17 +113,10 @@ export default function StepUpsell({ onAccept, onDecline }) {
           </p>
         </div>
 
-        <div className="w-full mt-4 bg-gradient-to-br from-purple-800 to-pink-800 rounded-3xl p-5 text-center relative overflow-hidden">
-          <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full" />
-          <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white/5 rounded-full" />
-          <div className="text-5xl mb-2 relative">📅</div>
-          <p className="text-white font-bold text-base relative">Retrospectiva Animada</p>
-          <p className="text-purple-200 text-[13px] mt-1 relative">8+ seções · Animadas · Emocionantes</p>
-          <div className="flex justify-center gap-2 mt-3 relative flex-wrap">
-            {['💌 Mensagem', '🌙 Fase da lua', '🗺️ Mapa', '⭐ Estrelas'].map(t => (
-              <span key={t} className="bg-white/20 text-white text-[11px] px-2.5 py-1 rounded-full font-medium">{t}</span>
-            ))}
-          </div>
+        {/* phone mockup carousel */}
+        <div className="w-full mt-5 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl py-6 flex flex-col items-center gap-3" style={{ border: '1.5px solid #EDE9FE' }}>
+          <p className="text-[12px] font-bold text-purple-500 uppercase tracking-widest">Veja o que está incluso</p>
+          <PhoneCarousel />
         </div>
 
         <div className="w-full mt-5 flex flex-col gap-3">
