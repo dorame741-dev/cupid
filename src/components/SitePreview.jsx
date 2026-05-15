@@ -155,7 +155,7 @@ function MusicPlayer({ music }) {
 
   return (
     <div className="relative px-5 pb-6 overflow-hidden">
-      <div style={{ position: 'absolute', opacity: 0, width: 1, height: 1, overflow: 'hidden', pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', top: '-9999px', left: '-9999px', width: 1, height: 1, pointerEvents: 'none' }}>
         <div ref={divRef} />
       </div>
 
@@ -420,7 +420,8 @@ function WordleGameView({ data, onClose }) {
   const dica = data.jogoDica || 'Descubra a palavra secreta!'
   const msg  = data.jogoMensagem || ''
   const COLS = word.length
-  const ts   = Math.min(50, Math.floor((280 - (COLS - 1) * 6) / COLS))
+  const gridW = typeof window !== 'undefined' ? Math.min(340, window.innerWidth - 40) : 320
+  const ts   = Math.min(66, Math.floor((gridW - (COLS - 1) * 8) / COLS))
 
   const [guesses, setGuesses] = useState([])
   const [current, setCurrent] = useState('')
@@ -459,18 +460,18 @@ function WordleGameView({ data, onClose }) {
           <h2 style={{ fontSize:20, fontWeight:900, color:'white', lineHeight:1.3 }}>{dica}</h2>
           <p style={{ fontSize:13, color:'#6b7280', marginTop:4 }}>Descubra a palavra ({COLS} letras)</p>
         </div>
-        <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {Array.from({ length:6 }, (_, row) => {
             const guess = guesses[row]
             const isCur = row === guesses.length && !won && !lost
             const letters = guess ? [...guess] : isCur ? [...current, ...Array(COLS - current.length).fill('')] : Array(COLS).fill('')
             const colors  = guess ? getWordleColors(guess, word) : null
             return (
-              <div key={row} style={{ display:'flex', gap:6 }}>
+              <div key={row} style={{ display:'flex', gap:8 }}>
                 {letters.map((letter, col) => {
                   const c = colors?.[col]
                   return (
-                    <div key={col} style={{ width:ts, height:ts, background:c ? WL_TILE[c] : 'transparent', border:`2px solid ${c ? WL_TILE[c] : letter ? '#818384' : '#3a3a3c'}`, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:Math.round(ts*0.4), fontWeight:900, color:'white' }}>
+                    <div key={col} style={{ width:ts, height:ts, background:c ? WL_TILE[c] : 'transparent', border:`2px solid ${c ? WL_TILE[c] : letter ? '#818384' : '#3a3a3c'}`, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:Math.round(ts*0.44), fontWeight:900, color:'white' }}>
                       {letter}
                     </div>
                   )
@@ -481,14 +482,14 @@ function WordleGameView({ data, onClose }) {
         </div>
         <div style={{ height:16 }} />
       </div>
-      <div style={{ background:'#111119', padding:'8px 0 12px', flexShrink:0 }}>
+      <div style={{ background:'#111119', padding:'8px 0 14px', flexShrink:0 }}>
         {[WL_ROW1, WL_ROW2, WL_ROW3].map((row, ri) => (
-          <div key={ri} style={{ display:'flex', justifyContent:'center', gap:5, marginBottom:ri<2?5:0 }}>
+          <div key={ri} style={{ display:'flex', justifyContent:'center', gap:6, marginBottom:ri<2?6:0 }}>
             {ri === 1 && (
-              <button onClick={submit} style={{ background:current.length===COLS?'#538d4e':'#3a3a3c', minWidth:40, height:46, borderRadius:6, color:'white', fontSize:11, fontWeight:700, border:'none', cursor:'pointer', flexShrink:0 }}>OK</button>
+              <button onClick={submit} style={{ background:current.length===COLS?'#538d4e':'#3a3a3c', minWidth:46, height:54, borderRadius:8, color:'white', fontSize:13, fontWeight:700, border:'none', cursor:'pointer', flexShrink:0 }}>OK</button>
             )}
             {row.map(k => (
-              <button key={k} onClick={() => handleKey(k)} style={{ background:WL_KEY[keyColors[k]||'default'], minWidth:k==='⌫'?42:30, height:46, borderRadius:6, color:'white', fontSize:k==='⌫'?18:13, fontWeight:700, border:'none', cursor:'pointer', flexShrink:0 }}>
+              <button key={k} onClick={() => handleKey(k)} style={{ background:WL_KEY[keyColors[k]||'default'], minWidth:k==='⌫'?50:36, height:54, borderRadius:8, color:'white', fontSize:k==='⌫'?20:15, fontWeight:700, border:'none', cursor:'pointer', flexShrink:0 }}>
                 {k}
               </button>
             ))}
