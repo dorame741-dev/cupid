@@ -66,7 +66,7 @@ function AppContent() {
         {step === 'step4-message' && <Step4Message onNext={next} onBack={back} />}
         {step === 'step5-cover'   && <Step5CoverPhoto onNext={next} onBack={back} />}
         {step === 'step6-counter' && <Step6CounterTexts onNext={next} onBack={back} />}
-        {step === 'upsell'        && <StepUpsell onAccept={next} onDecline={() => skipTo('final-preview')} />}
+        {step === 'upsell'        && <StepUpsell onAccept={next} onDecline={() => skipTo('step-pagamento')} />}
         {step === 'step-wrapped'  && <StepWrapped onNext={(sections) => afterWrapped(sections)} onSkip={() => skipTo('final-preview')} />}
         {step === 'step-roleta'   && <StepRoleta onNext={afterRoleta} onBack={() => skipTo('step-wrapped')} />}
         {step === 'step-mapa'     && <StepMapa onNext={afterMapa} onBack={() => sel.includes('roulette') ? skipTo('step-roleta') : skipTo('step-wrapped')} />}
