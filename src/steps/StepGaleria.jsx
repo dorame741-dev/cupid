@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { ImagePlus, X, ChevronLeft, ChevronRight, LayoutGrid, Smartphone } from 'lucide-react'
 import PreviewFab from '../components/PreviewFab'
 import BackButton from '../components/BackButton'
@@ -80,20 +80,51 @@ function CardsPreview({ photos, onClose }) {
 }
 
 /* ─── Preview: Estilo Stories ────────────────────────────────── */
+const STORY_DURATION = 4000
+
 function StoriesPreview({ photos, onClose }) {
   const [idx, setIdx] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const startRef = useRef(Date.now())
+  const rafRef = useRef(null)
+
+  const goTo = (next) => {
+    const clamped = Math.max(0, Math.min(photos.length - 1, next))
+    setIdx(clamped)
+    setProgress(0)
+    startRef.current = Date.now()
+  }
+
+  useEffect(() => {
+    startRef.current = Date.now()
+    setProgress(0)
+
+    const tick = () => {
+      const elapsed = Date.now() - startRef.current
+      const pct = Math.min(100, (elapsed / STORY_DURATION) * 100)
+      setProgress(pct)
+      if (pct < 100) {
+        rafRef.current = requestAnimationFrame(tick)
+      } else {
+        if (idx < photos.length - 1) {
+          goTo(idx + 1)
+        }
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [idx, photos.length])
+
   const photo = photos[idx]
-  const prev = () => idx > 0 && setIdx(i => i - 1)
-  const next = () => idx < photos.length - 1 && setIdx(i => i + 1)
 
   return (
     <div className="step-root" style={{ background: '#111119' }}>
       {/* barras de progresso */}
-      <div className="shrink-0 flex gap-1 px-3 pt-2 pb-1">
+      <div className="shrink-0 flex gap-1 px-3 pt-3 pb-1" style={{ zIndex: 30, position: 'relative' }}>
         {photos.map((_, i) => (
-          <div key={i} className="flex-1 h-0.5 rounded-full overflow-hidden bg-white/20">
-            <div className="h-full rounded-full bg-white transition-all"
-              style={{ width: i < idx ? '100%' : i === idx ? '40%' : '0%' }} />
+          <div key={i} className="flex-1 rounded-full overflow-hidden" style={{ height: 3, background: 'rgba(255,255,255,0.25)' }}>
+            <div className="h-full rounded-full bg-white"
+              style={{ width: i < idx ? '100%' : i === idx ? `${progress}%` : '0%', transition: i === idx ? 'none' : 'width 0.1s' }} />
           </div>
         ))}
       </div>
@@ -107,24 +138,27 @@ function StoriesPreview({ photos, onClose }) {
           style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.65), transparent)' }} />
 
         {/* título */}
-        <div className="absolute top-0 left-0 right-0 px-5 pt-4 z-10 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 px-5 pt-4 pointer-events-none" style={{ zIndex: 10 }}>
           <h2 className="text-[24px] font-black text-white leading-tight">
-            {photo.title || 'Sem título'}
+            {photo.title || ''}
           </h2>
           {photo.desc ? (
             <p className="text-[13px] text-white/70 mt-0.5">{photo.desc}</p>
           ) : null}
         </div>
 
-        {/* zonas de toque */}
-        <button onClick={prev} className="absolute left-0 top-0 w-1/3 h-full z-20" />
-        <button onClick={next} className="absolute right-0 top-0 w-1/3 h-full z-20" />
+        {/* zonas de toque — só laterais, não sobrepõem rodapé */}
+        <button onClick={() => goTo(idx - 1)} className="absolute left-0 top-0 w-1/3" style={{ height: 'calc(100% - 60px)', zIndex: 20 }} />
+        <button onClick={() => goTo(idx + 1)} className="absolute right-0 top-0 w-1/3" style={{ height: 'calc(100% - 60px)', zIndex: 20 }} />
       </div>
 
-      <button onClick={onClose}
-        className="absolute bottom-4 right-4 bg-purple-600 text-white rounded-full px-5 py-2.5 font-semibold text-[14px] active:scale-95 transition-all z-10">
-        Voltar
-      </button>
+      {/* rodapé com Voltar */}
+      <div className="shrink-0 flex justify-end px-4 py-3" style={{ zIndex: 30, position: 'relative' }}>
+        <button onClick={onClose}
+          className="bg-purple-600 text-white rounded-full px-5 py-2.5 font-semibold text-[14px] active:scale-95 transition-all">
+          Voltar
+        </button>
+      </div>
     </div>
   )
 }

@@ -188,9 +188,7 @@ function MusicPlayer({ music }) {
         </button>
         <button onClick={togglePlay}
           className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-all">
-          {!ready
-            ? <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin" />
-            : <span className="text-gray-900 text-2xl ml-[2px]">{playing ? '⏸' : '▶'}</span>}
+          <span className="text-gray-900 text-2xl ml-[2px]">{playing ? '⏸' : '▶'}</span>
         </button>
         <button onClick={seekForward}
           className="w-10 h-10 flex flex-col items-center justify-center text-gray-300 hover:text-white transition-colors active:scale-90 group">
