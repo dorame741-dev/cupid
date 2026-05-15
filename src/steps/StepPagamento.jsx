@@ -10,12 +10,17 @@ const TOKEN      = import.meta.env.VITE_PUSHINPAY_TOKEN
 
 /* ── PIX image ────────────────────────────────────────────────── */
 function PixLogo({ size = 26, white = false }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return (
+    <span style={{ fontSize: size * 0.55, fontWeight: 900, color: white ? 'white' : '#00b09b', letterSpacing: -1, lineHeight: 1 }}>PIX</span>
+  )
   return (
     <img
       src="/pix.png"
       width={size}
       height={size}
       alt="PIX"
+      onError={() => setFailed(true)}
       style={{ objectFit: 'contain', filter: white ? 'brightness(0) invert(1)' : 'none' }}
     />
   )
@@ -234,6 +239,63 @@ async function fireCAPI(eventName, customData) {
   } catch {}
 }
 
+/* ── Edit-mode save screen ────────────────────────────────────── */
+function EditSaveScreen({ editPhone, siteUrl, data, buildQuizData, onBack }) {
+  const [saving, setSaving] = useState(false)
+  const [errMsg, setErrMsg] = useState('')
+
+  const handleSave = async () => {
+    setSaving(true)
+    setErrMsg('')
+    try {
+      const quizData = await buildQuizData()
+      await updateSiteData(editPhone, quizData)
+      window.location.href = `/obrigado/${editPhone}`
+    } catch {
+      setErrMsg('Erro ao salvar. Tente novamente.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="step-root" style={{ background: '#f8f5ff' }}>
+      <div className="step-scroll flex flex-col items-center justify-center gap-6 px-6 pb-12 text-center">
+        <div style={{ fontSize: 56 }}>✏️</div>
+        <div>
+          <p className="text-[22px] font-black text-gray-900">Salvar Alterações</p>
+          <p className="text-[14px] text-gray-500 mt-2 leading-relaxed">
+            As mudanças serão aplicadas ao presente em{' '}
+            <strong style={{ color: '#7c3aed' }}>/{editPhone}</strong>.
+          </p>
+        </div>
+        <div className="w-full bg-white border border-gray-200 rounded-2xl p-4 text-left" style={{ maxWidth: 360 }}>
+          <p className="text-[10px] font-bold text-purple-500 tracking-widest mb-3">RESUMO DAS ALTERAÇÕES</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-[13px] text-gray-700">👫 Casal: <strong>{[data.myName, data.partnerName].filter(Boolean).join(' & ') || '—'}</strong></p>
+            <p className="text-[13px] text-gray-700">✏️ Título: <strong>{data.title || '(sem título)'}</strong></p>
+            <p className="text-[13px] text-gray-700">📅 Data: <strong>{data.relationshipStart || '—'}</strong></p>
+            {data.wrappedSections?.length > 0 && (
+              <p className="text-[13px] text-gray-700">🎁 Seções: <strong>{data.wrappedSections.length} extra{data.wrappedSections.length !== 1 ? 's' : ''}</strong></p>
+            )}
+          </div>
+        </div>
+        {errMsg && <p className="text-[13px] text-red-500 font-semibold">{errMsg}</p>}
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full bg-purple-600 text-white rounded-2xl py-4 font-black text-[16px] active:scale-[0.98] transition-all disabled:opacity-60"
+          style={{ maxWidth: 360 }}
+        >
+          {saving ? '⏳ Salvando...' : '💾 Salvar Alterações'}
+        </button>
+        <button onClick={onBack} className="text-[13px] text-gray-400 underline">
+          ← Voltar e editar mais
+        </button>
+      </div>
+    </div>
+  )
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 export default function StepPagamento({ onNext, onBack }) {
   const { data } = useQuiz()
@@ -333,6 +395,9 @@ export default function StepPagamento({ onNext, onBack }) {
       setTimeout(() => setCopied(false), 2500)
     })
   }
+
+  /* ── edit bypass (must come before screen checks) ── */
+  if (isEditMode) return <EditSaveScreen editPhone={editPhone} siteUrl={siteUrl} data={data} buildQuizData={buildQuizData} onBack={onBack} />
 
   /* ── loading ── */
   if (screen === 'loading') return (
@@ -445,55 +510,6 @@ export default function StepPagamento({ onNext, onBack }) {
           style={{ maxWidth: 360 }}
         >
           💾 Salvar como demonstração
-        </button>
-        <button onClick={onBack} className="text-[13px] text-gray-400 underline">
-          ← Voltar e editar mais
-        </button>
-      </div>
-    </div>
-  )
-
-  /* ── edit bypass (skip PIX, just re-save) ── */
-  if (isEditMode) return (
-    <div className="step-root" style={{ background: '#f8f5ff' }}>
-      <div className="step-scroll flex flex-col items-center justify-center gap-6 px-6 pb-12 text-center">
-        <div style={{ fontSize: 56 }}>✏️</div>
-        <div>
-          <p className="text-[22px] font-black text-gray-900">Salvar Alterações</p>
-          <p className="text-[14px] text-gray-500 mt-2 leading-relaxed">
-            As mudanças serão aplicadas ao link existente.<br />
-            <strong style={{ color: '#7c3aed' }}>Nenhum pagamento adicional necessário.</strong>
-          </p>
-        </div>
-        <div className="w-full bg-white border border-gray-200 rounded-2xl p-4 text-left" style={{ maxWidth: 360 }}>
-          <p className="text-[10px] font-bold text-purple-500 tracking-widest mb-3">RESUMO</p>
-          <div className="flex flex-col gap-2">
-            <p className="text-[13px] text-gray-700">📱 Link: <strong style={{ color: '#7c3aed' }}>{siteUrl}</strong></p>
-            <p className="text-[13px] text-gray-700">👫 Casal: <strong>{[data.myName, data.partnerName].filter(Boolean).join(' & ') || '—'}</strong></p>
-            <p className="text-[13px] text-gray-700">✏️ Título: <strong>{data.title || '(sem título)'}</strong></p>
-            <p className="text-[13px] text-gray-700">📅 Data: <strong>{data.relationshipStart || '—'}</strong></p>
-            {data.wrappedSections?.length > 0 && (
-              <p className="text-[13px] text-gray-700">🎁 Seções: <strong>{data.wrappedSections.length} extra{data.wrappedSections.length !== 1 ? 's' : ''}</strong></p>
-            )}
-          </div>
-        </div>
-        {errMsg && <p className="text-red-500 text-[13px]">{errMsg}</p>}
-        <button
-          onClick={async () => {
-            setScreen('loading')
-            try {
-              const quizData = await buildQuizData()
-              await updateSiteData(editPhone, quizData)
-              window.location.href = `/obrigado/${editPhone}`
-            } catch {
-              setErrMsg('Erro ao salvar. Verifique a conexão e tente novamente.')
-              setScreen('form')
-            }
-          }}
-          className="w-full bg-purple-600 text-white rounded-2xl py-4 font-black text-[16px] active:scale-[0.98] transition-all"
-          style={{ maxWidth: 360 }}
-        >
-          💾 Salvar alterações
         </button>
         <button onClick={onBack} className="text-[13px] text-gray-400 underline">
           ← Voltar e editar mais

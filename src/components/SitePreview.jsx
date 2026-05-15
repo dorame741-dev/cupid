@@ -304,6 +304,276 @@ function MessageCard({ message, audio, onOpen }) {
   )
 }
 
+/* ─── Games hub (Conquistas) ────────────────────────────────── */
+const GAME_DEFS = [
+  { id: 'roulette', icon: '🎡', label: 'Roleta',   bg: '#7f1d1d', accent: '#fca5a5' },
+  { id: 'words',    icon: '🔤', label: 'Palavras',  bg: '#2e1065', accent: '#c4b5fd' },
+  { id: 'gallery',  icon: '📸', label: 'Galeria',   bg: '#451a03', accent: '#fcd34d' },
+  { id: 'map',      icon: '🗺️',  label: 'Mapa',     bg: '#082f49', accent: '#7dd3fc' },
+  { id: 'timeline', icon: '📅', label: 'Jornada',   bg: '#052e16', accent: '#6ee7b7' },
+  { id: 'stars',    icon: '⭐', label: 'Estrelas',  bg: '#1e1b4b', accent: '#a5b4fc' },
+]
+
+const ROLETA_COLORS = { rosa: ['#d4547a','#f0a8c0'], azul: ['#3b6fd4','#7ab2f0'] }
+
+function RoletaWheelSVG({ options, colors, rotation, spinning }) {
+  const n = options.length
+  if (n < 2) return null
+  const cx = 150, cy = 150, r = 140
+  const slices = options.map((opt, i) => {
+    const start = (i / n) * 2 * Math.PI - Math.PI / 2
+    const end   = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2
+    const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start)
+    const x2 = cx + r * Math.cos(end),   y2 = cy + r * Math.sin(end)
+    const large = end - start > Math.PI ? 1 : 0
+    const mid = (start + end) / 2
+    const tx = cx + r * 0.65 * Math.cos(mid), ty = cy + r * 0.65 * Math.sin(mid)
+    return { opt, x1, y1, x2, y2, large, tx, ty, mid, color: colors[i % 2] }
+  })
+  return (
+    <svg viewBox="0 0 300 300" width="100%" height="100%"
+      style={{ transform: `rotate(${rotation}deg)`, transition: spinning ? 'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)' : 'none' }}>
+      {slices.map(({ opt, x1, y1, x2, y2, large, tx, ty, mid, color }, i) => (
+        <g key={i}>
+          <path d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`} fill={color} stroke="white" strokeWidth={1.5} />
+          <text x={tx} y={ty} fill="white" fontSize={11} fontWeight="bold" textAnchor="middle" dominantBaseline="middle"
+            transform={`rotate(${mid * 180 / Math.PI + 90}, ${tx}, ${ty})`}>
+            {opt.length > 9 ? opt.slice(0,9)+'…' : opt}
+          </text>
+        </g>
+      ))}
+      <circle cx={cx} cy={cy} r={22} fill={colors[0]} />
+      <text x={cx} y={cy+2} fontSize={20} textAnchor="middle" dominantBaseline="middle" fill="white">♥</text>
+    </svg>
+  )
+}
+
+function RoletaGameView({ data, onClose }) {
+  const colors = ROLETA_COLORS[data.roletaTheme] || ROLETA_COLORS.rosa
+  const question = data.roletaQuestion || 'Para onde vamos sair hoje?'
+  const options  = (data.roletaOptions || []).filter(o => o?.trim())
+  const [spinning, setSpinning] = useState(false)
+  const [rotation, setRotation] = useState(0)
+  const [result, setResult]     = useState(null)
+  const rotRef = useRef(0)
+
+  const spin = () => {
+    if (spinning || options.length < 2) return
+    setSpinning(true); setResult(null)
+    const next = rotRef.current + (5 + Math.random() * 5) * 360 + Math.random() * 360
+    rotRef.current = next; setRotation(next)
+    setTimeout(() => {
+      setSpinning(false)
+      const n = options.length
+      const normalized = ((next % 360) + 360) % 360
+      const pointerOnWheel = (360 - normalized) % 360
+      setResult(options[Math.floor(pointerOnWheel / (360 / n)) % n])
+    }, 4200)
+  }
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:200, background:'#0d0d0d', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <div style={{ flex:1, overflowY:'auto', display:'flex', flexDirection:'column', alignItems:'center', paddingBottom:24 }}>
+        <h2 style={{ color:'white', fontSize:22, fontWeight:900, textAlign:'center', margin:'24px 16px 20px' }}>{question}</h2>
+        <div style={{ width:0, height:0, borderLeft:'11px solid transparent', borderRight:'11px solid transparent', borderTop:`22px solid ${colors[0]}`, marginBottom:4 }} />
+        <div style={{ width:'78%', aspectRatio:'1' }}>
+          <RoletaWheelSVG options={options} colors={colors} rotation={rotation} spinning={spinning} />
+        </div>
+        <button onClick={spin} disabled={spinning}
+          style={{ marginTop:32, background:'white', color:'#111', fontWeight:700, fontSize:16, padding:'16px 48px', borderRadius:16, border:'none', cursor:'pointer', opacity:spinning?0.6:1 }}>
+          {spinning ? 'Girando…' : 'Girar Roleta'}
+        </button>
+        {result && (
+          <div style={{ margin:'24px 24px 0', background:'rgba(255,255,255,0.1)', borderRadius:16, padding:'16px 20px', textAlign:'center' }}>
+            <p style={{ color:'rgba(255,255,255,0.5)', fontSize:13 }}>O resultado foi</p>
+            <p style={{ color:'white', fontSize:24, fontWeight:900, marginTop:4 }}>{result}</p>
+          </div>
+        )}
+      </div>
+      <button onClick={onClose} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.12)', color:'white', border:'none', borderRadius:20, padding:'8px 16px', fontSize:14, fontWeight:600, cursor:'pointer' }}>✕ Fechar</button>
+    </div>
+  )
+}
+
+function getWordleColors(guess, target) {
+  const result = Array(guess.length).fill('absent')
+  const pool = [...target]
+  for (let i = 0; i < guess.length; i++) {
+    if (guess[i] === target[i]) { result[i] = 'correct'; pool[i] = null }
+  }
+  for (let i = 0; i < guess.length; i++) {
+    if (result[i] === 'correct') continue
+    const j = pool.indexOf(guess[i])
+    if (j !== -1) { result[i] = 'present'; pool[j] = null }
+  }
+  return result
+}
+
+const WL_TILE = { correct:'#538d4e', present:'#b59f3b', absent:'#3a3a3c' }
+const WL_KEY  = { correct:'#538d4e', present:'#b59f3b', absent:'#3a3a3c', default:'#818384' }
+const WL_ROW1 = ['Q','W','E','R','T','Y','U','I','O','P']
+const WL_ROW2 = ['A','S','D','F','G','H','J','K','L']
+const WL_ROW3 = ['Z','X','C','V','B','N','M','⌫']
+
+function WordleGameView({ data, onClose }) {
+  const word = data.jogoWord || ''
+  const dica = data.jogoDica || 'Descubra a palavra secreta!'
+  const msg  = data.jogoMensagem || ''
+  const COLS = word.length
+  const ts   = Math.min(50, Math.floor((280 - (COLS - 1) * 6) / COLS))
+
+  const [guesses, setGuesses] = useState([])
+  const [current, setCurrent] = useState('')
+  const [won,  setWon]  = useState(false)
+  const [lost, setLost] = useState(false)
+
+  const submit = () => {
+    if (won || lost || current.length !== COLS) return
+    const next = [...guesses, current]; setGuesses(next); setCurrent('')
+    if (current === word) { setWon(true); return }
+    if (next.length >= 6) setLost(true)
+  }
+  const handleKey = (k) => {
+    if (won || lost) return
+    if (k === '⌫') { setCurrent(c => c.slice(0,-1)); return }
+    if (current.length < COLS) setCurrent(c => c + k)
+  }
+
+  const keyColors = {}
+  guesses.forEach(g => getWordleColors(g, word).forEach((c, i) => {
+    const l = g[i]; const prev = keyColors[l]
+    if (!prev || c === 'correct' || (c === 'present' && prev === 'absent')) keyColors[l] = c
+  }))
+
+  if (!word) return (
+    <div style={{ position:'fixed', inset:0, zIndex:200, background:'#111119', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
+      <p style={{ color:'white' }}>Jogo não configurado</p>
+      <button onClick={onClose} style={{ color:'#a78bfa', fontSize:14, background:'none', border:'none', cursor:'pointer' }}>Fechar</button>
+    </div>
+  )
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:200, background:'#111119', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <div style={{ flex:1, overflowY:'auto', display:'flex', flexDirection:'column', alignItems:'center', background:'#111119' }}>
+        <div style={{ textAlign:'center', padding:'24px 20px 16px' }}>
+          <h2 style={{ fontSize:20, fontWeight:900, color:'white', lineHeight:1.3 }}>{dica}</h2>
+          <p style={{ fontSize:13, color:'#6b7280', marginTop:4 }}>Descubra a palavra ({COLS} letras)</p>
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+          {Array.from({ length:6 }, (_, row) => {
+            const guess = guesses[row]
+            const isCur = row === guesses.length && !won && !lost
+            const letters = guess ? [...guess] : isCur ? [...current, ...Array(COLS - current.length).fill('')] : Array(COLS).fill('')
+            const colors  = guess ? getWordleColors(guess, word) : null
+            return (
+              <div key={row} style={{ display:'flex', gap:6 }}>
+                {letters.map((letter, col) => {
+                  const c = colors?.[col]
+                  return (
+                    <div key={col} style={{ width:ts, height:ts, background:c ? WL_TILE[c] : 'transparent', border:`2px solid ${c ? WL_TILE[c] : letter ? '#818384' : '#3a3a3c'}`, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:Math.round(ts*0.4), fontWeight:900, color:'white' }}>
+                      {letter}
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+        <div style={{ height:16 }} />
+      </div>
+      <div style={{ background:'#111119', padding:'8px 0 12px', flexShrink:0 }}>
+        {[WL_ROW1, WL_ROW2, WL_ROW3].map((row, ri) => (
+          <div key={ri} style={{ display:'flex', justifyContent:'center', gap:5, marginBottom:ri<2?5:0 }}>
+            {ri === 1 && (
+              <button onClick={submit} style={{ background:current.length===COLS?'#538d4e':'#3a3a3c', minWidth:40, height:46, borderRadius:6, color:'white', fontSize:11, fontWeight:700, border:'none', cursor:'pointer', flexShrink:0 }}>OK</button>
+            )}
+            {row.map(k => (
+              <button key={k} onClick={() => handleKey(k)} style={{ background:WL_KEY[keyColors[k]||'default'], minWidth:k==='⌫'?42:30, height:46, borderRadius:6, color:'white', fontSize:k==='⌫'?18:13, fontWeight:700, border:'none', cursor:'pointer', flexShrink:0 }}>
+                {k}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      {(won || lost) && (
+        <div style={{ position:'absolute', insetInline:0, bottom:0, background:'#1a1a26', borderTop:'1px solid rgba(255,255,255,0.1)', borderRadius:'24px 24px 0 0', padding:'20px', display:'flex', flexDirection:'column', alignItems:'center', zIndex:10 }}>
+          <p style={{ color:'white', fontWeight:900, fontSize:22 }}>{won ? 'Parabéns! 🎉' : 'Quase lá! 😅'}</p>
+          <p style={{ color:'#9ca3af', fontSize:13, marginTop:4 }}>A palavra era</p>
+          <div style={{ display:'flex', gap:6, marginTop:12 }}>
+            {[...word].map((l, i) => <div key={i} style={{ width:44, height:44, background:won?WL_TILE.correct:WL_TILE.absent, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:900, color:'white' }}>{l}</div>)}
+          </div>
+          {msg && <p style={{ color:'#d1d5db', fontSize:13, marginTop:12, textAlign:'center', fontStyle:'italic' }}>"{msg}"</p>}
+          <button onClick={onClose} style={{ marginTop:16, width:'100%', background:won?'#16a34a':'#7c3aed', color:'white', borderRadius:16, padding:'14px', fontSize:15, fontWeight:700, border:'none', cursor:'pointer' }}>Fechar ✓</button>
+        </div>
+      )}
+      <button onClick={onClose} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.12)', color:'white', border:'none', borderRadius:20, padding:'8px 16px', fontSize:14, fontWeight:600, cursor:'pointer' }}>✕ Fechar</button>
+    </div>
+  )
+}
+
+function GenericGameView({ gameId, onClose }) {
+  const def = GAME_DEFS.find(g => g.id === gameId)
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:200, background:def?.bg||'#111', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
+      <span style={{ fontSize:72 }}>{def?.icon}</span>
+      <p style={{ color:'white', fontWeight:900, fontSize:22 }}>{def?.label}</p>
+      <p style={{ color:'rgba(255,255,255,0.5)', fontSize:14, textAlign:'center', padding:'0 32px', lineHeight:1.6 }}>
+        Esta seção está disponível no Wrapped do seu presente.
+      </p>
+      <button onClick={onClose} style={{ marginTop:8, background:'rgba(255,255,255,0.15)', color:'white', border:'1px solid rgba(255,255,255,0.2)', borderRadius:20, padding:'10px 28px', fontSize:14, fontWeight:600, cursor:'pointer' }}>✕ Fechar</button>
+    </div>
+  )
+}
+
+function GameModal({ gameId, data, onClose }) {
+  if (gameId === 'roulette') return <RoletaGameView data={data} onClose={onClose} />
+  if (gameId === 'words')    return <WordleGameView data={data} onClose={onClose} />
+  return <GenericGameView gameId={gameId} onClose={onClose} />
+}
+
+function ConquistasSection({ data }) {
+  const sections  = data.wrappedSections || []
+  const available = GAME_DEFS.filter(g => sections.includes(g.id))
+  const [openGame, setOpenGame] = useState(null)
+
+  if (!available.length) return (
+    <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3"
+      style={{ background:'rgba(10,2,8,0.5)', border:'1px solid rgba(190,18,60,0.2)' }}>
+      <p className="text-white text-[14px] font-bold mb-2">Conquistas</p>
+      <p style={{ color:'rgba(190,18,60,0.5)', fontSize:12 }}>Nenhum jogo adicionado</p>
+    </div>
+  )
+
+  return (
+    <>
+      {openGame && <GameModal gameId={openGame} data={data} onClose={() => setOpenGame(null)} />}
+      <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3"
+        style={{ background:'rgba(10,2,8,0.5)', border:'1px solid rgba(190,18,60,0.2)' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+          <div>
+            <p style={{ color:'white', fontSize:14, fontWeight:700, margin:0 }}>Conquistas</p>
+            <p style={{ color:'rgba(190,18,60,0.6)', fontSize:11, marginTop:2 }}>{available.length} de {GAME_DEFS.length} desbloqueadas</p>
+          </div>
+          <button onClick={() => setOpenGame(available[Math.floor(Math.random() * available.length)].id)}
+            style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(190,18,60,0.25)', border:'1px solid rgba(190,18,60,0.3)', borderRadius:20, padding:'6px 12px', cursor:'pointer' }}>
+            <span style={{ fontSize:11, fontWeight:700, color:'#fca5a5' }}>SORTEAR</span>
+            <span style={{ fontSize:14 }}>🎲</span>
+          </button>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(available.length, 3)}, 1fr)`, gap:8 }}>
+          {available.map(g => (
+            <button key={g.id} onClick={() => setOpenGame(g.id)}
+              style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'16px 8px', borderRadius:16, background:g.bg, border:`1px solid ${g.accent}30`, cursor:'pointer' }}>
+              <span style={{ fontSize:28 }}>{g.icon}</span>
+              <span style={{ fontSize:10, fontWeight:700, color:g.accent }}>{g.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
 /* ─── Hearts defs ───────────────────────────────────────────── */
 const HEART_DEFS = [
   { left: '5%',  size: 22, dur: 8,  delay: -1  },
@@ -415,18 +685,7 @@ export default function SitePreview({ onBack, externalData, overlay }) {
         {/* ZONE 3 RED: conquistas + retrospectiva */}
 
         <div style={{ background: BG_RED2 }} className="pb-10">
-          <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3"
-            style={{ background: 'rgba(10,2,8,0.5)', border: '1px solid rgba(190,18,60,0.2)' }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-white text-[14px] font-bold">Conquistas</p>
-              <span className="text-rose-400/60 text-[12px] font-medium">8/30</span>
-            </div>
-            <div className="flex gap-2">
-              {['∞', '◎', '☆', '♣'].map((icon, i) => (
-                <div key={i} className="flex-1 aspect-square rounded-2xl bg-rose-950/60 border border-rose-800/30 flex items-center justify-center text-xl text-rose-300/50">{icon}</div>
-              ))}
-            </div>
-          </div>
+          <ConquistasSection data={data} />
 
           <div className="mx-4 rounded-3xl overflow-hidden shadow-2xl">
             <div className="bg-gradient-to-br from-violet-600 via-pink-500 to-orange-400 p-7 text-center">
