@@ -9,7 +9,7 @@ function normalize(str) {
 
 async function loadCities() {
   if (cachedCities) return cachedCities
-  const res = await fetch('/api/cidades')
+  const res = await fetch('/cidades.json')
   if (!res.ok) throw new Error('Falha ao carregar')
   cachedCities = await res.json()
   return cachedCities
