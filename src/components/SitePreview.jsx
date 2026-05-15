@@ -323,8 +323,8 @@ const HEART_DEFS = [
 
 /* ─── Main preview ──────────────────────────────────────────── */
 export default function SitePreview({ onBack, externalData, overlay }) {
-  const { data: ctxData } = useQuiz()
-  const data = externalData || ctxData
+  const ctx = useQuiz()
+  const data = externalData || ctx?.data || {}
   const [msgOpen, setMsgOpen] = useState(false)
   const ct = data.counterTexts || {}
   const coupleName = ct.coupleName || `${data.myName} e ${data.partnerName}`
