@@ -67,8 +67,7 @@ function Preview({ question, options, theme, onClose }) {
       const sliceAngle = 360 / n
       const normalized = ((next % 360) + 360) % 360
       const pointerOnWheel = (360 - normalized) % 360
-      const adjusted = (pointerOnWheel + sliceAngle / 2) % 360
-      setResult(options[Math.floor(adjusted / sliceAngle) % n])
+      setResult(options[Math.floor(pointerOnWheel / sliceAngle) % n])
     }, 4200)
   }
 
