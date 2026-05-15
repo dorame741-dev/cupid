@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQuiz } from '../context/QuizContext'
 import { ChevronDown, ChevronUp, Shield, Lock, RefreshCw, Copy, Check, Loader } from 'lucide-react'
-import { saveSite, markPaid, uploadFromPreview } from '../lib/supabase'
+import { saveSite, markPaid, uploadFromPreview, getAppConfig } from '../lib/supabase'
 
 const BASE_PRICE = 19.90
 const QR_EXTRA   = 4.90
@@ -296,9 +296,38 @@ function SuccessScreen({ partnerName, siteUrl, digits, selectedQR, onNext }) {
 }
 
 function firePixel(event, params) {
-  if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
-    window.fbq('track', event, params)
+  if (typeof window?.fbq === 'function') window.fbq('track', event, params)
+  // TikTok — map FB events to TikTok standard events
+  if (typeof window?.ttq !== 'undefined') {
+    const ttqEvent = event === 'Purchase' ? 'CompletePayment' : 'InitiateCheckout'
+    window.ttq.track(ttqEvent, { value: params.value, currency: params.currency, content_name: params.content_name })
   }
+}
+
+async function fireCAPI(eventName, customData) {
+  try {
+    const [pixelId, accessToken] = await Promise.all([
+      getAppConfig('pixel_id'),
+      getAppConfig('fb_access_token'),
+    ])
+    if (!pixelId || !accessToken) return
+    await fetch('/api/fbcapi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pixel_id: pixelId,
+        access_token: accessToken,
+        events: [{
+          event_name: eventName,
+          event_time: Math.floor(Date.now() / 1000),
+          event_source_url: window.location.href,
+          action_source: 'website',
+          user_data: { client_user_agent: navigator.userAgent },
+          custom_data: customData,
+        }],
+      }),
+    })
+  } catch {}
 }
 
 /* ── Main ─────────────────────────────────────────────────────── */
@@ -328,8 +357,11 @@ export default function StepPagamento({ onNext, onBack }) {
   const partnerName = data.partnerName || 'ela'
   const siteUrl = waValid ? `${window.location.origin}/${digits}` : ''
 
-  // Fire InitiateCheckout when this step first appears
-  useEffect(() => { firePixel('InitiateCheckout', { value: BASE_PRICE, currency: 'BRL', content_name: 'Presente de Casal' }) }, [])
+  useEffect(() => {
+    const p = { value: BASE_PRICE, currency: 'BRL', content_name: 'Presente de Casal' }
+    firePixel('InitiateCheckout', p)
+    fireCAPI('InitiateCheckout', { ...p, num_items: 1 })
+  }, [])
 
   const buildQuizData = useCallback(async () => {
     const photos = await Promise.all(
@@ -373,7 +405,9 @@ export default function StepPagamento({ onNext, onBack }) {
         if (d.status === 'paid' || d.status === 'PAID' || d.status === 'approved') {
           clearInterval(id)
           await markPaid(digits).catch(() => {})
-          firePixel('Purchase', { value: total, currency: 'BRL', content_name: 'Presente de Casal' })
+          const purchaseParams = { value: total, currency: 'BRL', content_name: 'Presente de Casal' }
+          firePixel('Purchase', purchaseParams)
+          fireCAPI('Purchase', { ...purchaseParams, num_items: 1 })
           setScreen('success')
         }
       } catch {}

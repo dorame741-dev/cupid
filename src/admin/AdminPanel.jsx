@@ -2,43 +2,57 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard, Users, Settings, LogOut, TrendingUp,
   DollarSign, ShoppingCart, Percent, RefreshCw, Copy, Check,
-  ChevronRight, Calendar, Star, Camera, Gamepad2, Globe, Gift, Clock,
+  ChevronRight, Calendar, Star, Camera, Gamepad2, Globe, Gift,
+  MessageCircle, ExternalLink, Pencil, Search,
+  Tv2, Link2, Package,
 } from 'lucide-react'
 import { getAllSites, getAppConfig, setAppConfig, createFreeLink, getFunnelEvents } from '../lib/supabase'
 
 /* ── palette ───────────────────────────────────────────────────── */
 const C = {
-  bg:      '#08080d',
-  side:    '#0e0e16',
-  surface: '#12121c',
-  card:    '#16162080',
-  border:  '#1e1e30',
-  text:    '#e5e7eb',
-  soft:    '#9ca3af',
-  muted:   '#4b5563',
+  bg:      '#07070f',
+  side:    '#0b0b16',
+  surface: '#10101e',
+  card:    '#131320',
+  border:  '#1c1c2e',
+  borderHi:'#2a2a42',
+  text:    '#e8eaf0',
+  soft:    '#94a3b8',
+  muted:   '#475569',
   purple:  '#7c3aed',
   purpleL: '#a78bfa',
+  purpleLt:'#c4b5fd',
   green:   '#10b981',
+  greenL:  '#34d399',
   amber:   '#f59e0b',
   blue:    '#3b82f6',
   red:     '#ef4444',
+  pink:    '#ec4899',
+  wa:      '#25d366',
+  tt:      '#ff0050',
 }
-const SIDEBAR = 220
+const SIDEBAR = 228
 
 /* ── helpers ───────────────────────────────────────────────────── */
+const TZ = 'America/Sao_Paulo'
+
 function fmt(d) {
   if (!d) return '—'
-  return new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
+  return new Date(d).toLocaleString('pt-BR', { timeZone: TZ, day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
 }
 function fmtShort(d) {
   if (!d) return '—'
-  return new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' })
+  return new Date(d).toLocaleDateString('pt-BR', { timeZone: TZ, day:'2-digit', month:'2-digit' })
 }
 function maskPhone(p) {
   if (!p || p.length < 10) return p
   return `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7)}`
 }
-function brl(v) { return `R$ ${v.toFixed(2).replace('.', ',')}` }
+function brl(v) { return `R$ ${Number(v).toFixed(2).replace('.', ',')}` }
+function initials(name) {
+  if (!name) return '?'
+  return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
+}
 
 function getPeriod(period, from, to) {
   const now = new Date()
@@ -56,25 +70,25 @@ function filterSites(sites, period, dateKey, from, to) {
 }
 
 /* ── chart components ───────────────────────────────────────────── */
-function BarChart({ data, color = C.purple, height = 100, secondary }) {
-  if (!data.length) return <div style={{ height, display:'flex', alignItems:'center', justifyContent:'center', color: C.muted, fontSize: 12 }}>Sem dados</div>
+function BarChart({ data, color = C.purple, height = 100, secondary, labelEvery = 1 }) {
+  if (!data.length) return (
+    <div style={{ height, display:'flex', alignItems:'center', justifyContent:'center', color: C.muted, fontSize: 12 }}>
+      Sem dados
+    </div>
+  )
   const maxVal = Math.max(...data.map(d => Math.max(d.value, d.value2 || 0)), 1)
   const barH = height - 28
   return (
-    <div style={{ display:'flex', alignItems:'flex-end', gap: 3, height, width:'100%', overflow:'hidden' }}>
+    <div style={{ display:'flex', alignItems:'flex-end', gap: data.length > 12 ? 1 : 3, height, width:'100%', overflow:'hidden' }}>
       {data.map((d, i) => (
         <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, height:'100%', justifyContent:'flex-end', minWidth:0 }}>
           <div style={{ width:'100%', display:'flex', alignItems:'flex-end', gap: 1, justifyContent:'center', height: barH }}>
-            <div style={{ flex:1, background:`${color}25`, borderRadius:'3px 3px 0 0', position:'relative', height:`${Math.max((d.value/maxVal)*barH,d.value?2:0)}px`, transition:'height 0.4s' }}>
-              <div style={{ position:'absolute', bottom:0, inset:0, background: color, borderRadius:'3px 3px 0 0' }} />
-            </div>
+            <div style={{ flex:1, borderRadius:'2px 2px 0 0', overflow:'hidden', height:`${Math.max((d.value/maxVal)*barH, d.value?2:0)}px`, background: color, transition:'height 0.4s', opacity:0.85 }} />
             {secondary && d.value2 !== undefined && (
-              <div style={{ flex:1, background:`${secondary}25`, borderRadius:'3px 3px 0 0', position:'relative', height:`${Math.max((d.value2/maxVal)*barH,d.value2?2:0)}px`, transition:'height 0.4s' }}>
-                <div style={{ position:'absolute', bottom:0, inset:0, background: secondary, borderRadius:'3px 3px 0 0' }} />
-              </div>
+              <div style={{ flex:1, borderRadius:'2px 2px 0 0', overflow:'hidden', height:`${Math.max((d.value2/maxVal)*barH, d.value2?2:0)}px`, background: secondary, transition:'height 0.4s', opacity:0.85 }} />
             )}
           </div>
-          <span style={{ fontSize:9, color: C.muted, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', width:'100%', textAlign:'center' }}>{d.label}</span>
+          <span style={{ fontSize: data.length > 12 ? 8 : 9, color: (labelEvery > 1 && i % labelEvery !== 0) ? 'transparent' : C.muted, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', width:'100%', textAlign:'center' }}>{d.label}</span>
         </div>
       ))}
     </div>
@@ -84,89 +98,106 @@ function BarChart({ data, color = C.purple, height = 100, secondary }) {
 function HBar({ label, value, max, color, sub }) {
   const pct = max ? Math.round((value/max)*100) : 0
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontSize:13, color: C.soft }}>{label}</span>
-        <span style={{ fontSize:13, fontWeight:800, color }}>{value}{sub && <span style={{ fontSize:11, color:C.muted, fontWeight:400 }}> {sub}</span>}</span>
+        <span style={{ fontSize:13, fontWeight:800, color }}>
+          {value}{sub && <span style={{ fontSize:11, color:C.muted, fontWeight:400 }}> {sub}</span>}
+        </span>
       </div>
-      <div style={{ height:6, background:`${color}20`, borderRadius:3, overflow:'hidden' }}>
-        <div style={{ height:'100%', width:`${pct}%`, background: color, borderRadius:3, transition:'width 0.5s' }} />
+      <div style={{ height:6, background:`${color}18`, borderRadius:3, overflow:'hidden' }}>
+        <div style={{ height:'100%', width:`${pct}%`, background: color, borderRadius:3, transition:'width 0.6s cubic-bezier(.4,0,.2,1)' }} />
       </div>
     </div>
   )
 }
 
 /* ── KPI card ───────────────────────────────────────────────────── */
-function KPI({ label, value, sub, color, Icon, delta }) {
+function KPI({ label, value, sub, color, Icon }) {
   return (
-    <div style={{ background: C.surface, borderRadius:16, padding:'22px 24px', border:`1px solid ${color}22`, display:'flex', flexDirection:'column', gap:10, flex:1 }}>
+    <div style={{
+      background: C.card, borderRadius:18, padding:'22px 24px',
+      border:`1px solid ${C.border}`, borderTop:`2px solid ${color}`,
+      display:'flex', flexDirection:'column', gap:12, flex:1,
+      transition:'transform 0.15s, box-shadow 0.15s', cursor:'default',
+    }}
+      onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 8px 24px ${color}18` }}
+      onMouseLeave={e=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none' }}
+    >
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <span style={{ fontSize:11, fontWeight:700, color: C.muted, textTransform:'uppercase', letterSpacing:1 }}>{label}</span>
-        <div style={{ width:34, height:34, borderRadius:10, background:`${color}18`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <Icon size={17} color={color} />
+        <span style={{ fontSize:11, fontWeight:700, color: C.muted, textTransform:'uppercase', letterSpacing:1.2 }}>{label}</span>
+        <div style={{ width:36, height:36, borderRadius:10, background:`${color}15`, display:'flex', alignItems:'center', justifyContent:'center', border:`1px solid ${color}25` }}>
+          <Icon size={16} color={color} />
         </div>
       </div>
-      <span style={{ fontSize:30, fontWeight:900, color, lineHeight:1 }}>{value}</span>
-      {sub && <span style={{ fontSize:12, color: C.muted }}>{sub}</span>}
+      <span style={{ fontSize:32, fontWeight:900, color, lineHeight:1, letterSpacing:-1 }}>{value}</span>
+      {sub && <span style={{ fontSize:12, color: C.muted, lineHeight:1.4 }}>{sub}</span>}
     </div>
   )
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────── */
 const NAV = [
-  { id:'dashboard', label:'Dashboard', Icon: LayoutDashboard },
-  { id:'clients',   label:'Clientes',  Icon: Users },
+  { id:'dashboard', label:'Dashboard',     Icon: LayoutDashboard },
+  { id:'clients',   label:'Clientes',      Icon: Users },
   { id:'settings',  label:'Configurações', Icon: Settings },
 ]
 
-function Sidebar({ active, setActive, onLogout }) {
+function Sidebar({ active, setActive, onLogout, totalPaid, totalSites }) {
   return (
-    <aside style={{
-      position:'fixed', left:0, top:0, bottom:0, width: SIDEBAR,
-      background: C.side, borderRight:`1px solid ${C.border}`,
-      display:'flex', flexDirection:'column', zIndex:100,
-    }}>
-      {/* logo */}
-      <div style={{ padding:'20px 20px 16px', borderBottom:`1px solid ${C.border}` }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <img src="/cupido.png" alt="" style={{ width:36, height:36, objectFit:'contain' }} />
+    <aside style={{ position:'fixed', left:0, top:0, bottom:0, width: SIDEBAR, background: C.side, borderRight:`1px solid ${C.border}`, display:'flex', flexDirection:'column', zIndex:100 }}>
+      <div style={{ padding:'22px 20px 18px', borderBottom:`1px solid ${C.border}` }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <div style={{ width:40, height:40, borderRadius:12, background:`${C.purple}20`, border:`1px solid ${C.purple}30`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+            <img src="/cupido.png" alt="" style={{ width:32, height:32, objectFit:'contain' }} onError={e=>{ e.currentTarget.style.display='none'; e.currentTarget.parentElement.textContent='💘' }} />
+          </div>
           <div>
-            <p style={{ margin:0, fontSize:15, fontWeight:900, color: C.text }}>Cupid</p>
-            <p style={{ margin:0, fontSize:10, color: C.muted }}>Admin Panel</p>
+            <p style={{ margin:0, fontSize:15, fontWeight:900, color: C.text, letterSpacing:-0.3 }}>Cupid</p>
+            <p style={{ margin:0, fontSize:10, color: C.muted, fontWeight:500 }}>Admin Panel</p>
           </div>
         </div>
       </div>
 
-      {/* nav */}
-      <nav style={{ flex:1, padding:'12px 10px', display:'flex', flexDirection:'column', gap:2 }}>
+      <div style={{ padding:'14px 16px 10px', borderBottom:`1px solid ${C.border}`, display:'flex', gap:8 }}>
+        <div style={{ flex:1, background:`${C.purple}12`, borderRadius:10, padding:'8px 10px', textAlign:'center', border:`1px solid ${C.purple}20` }}>
+          <p style={{ margin:0, fontSize:17, fontWeight:900, color:C.purpleL }}>{totalSites}</p>
+          <p style={{ margin:0, fontSize:9, color:C.muted, fontWeight:600, textTransform:'uppercase', letterSpacing:0.8 }}>total</p>
+        </div>
+        <div style={{ flex:1, background:`${C.green}12`, borderRadius:10, padding:'8px 10px', textAlign:'center', border:`1px solid ${C.green}20` }}>
+          <p style={{ margin:0, fontSize:17, fontWeight:900, color:C.green }}>{totalPaid}</p>
+          <p style={{ margin:0, fontSize:9, color:C.muted, fontWeight:600, textTransform:'uppercase', letterSpacing:0.8 }}>pagos</p>
+        </div>
+      </div>
+
+      <nav style={{ flex:1, padding:'12px 10px', display:'flex', flexDirection:'column', gap:3 }}>
         {NAV.map(({ id, label, Icon }) => {
           const on = active === id
           return (
             <button key={id} onClick={() => setActive(id)} style={{
-              display:'flex', alignItems:'center', gap:10, padding:'10px 14px',
-              borderRadius:10, cursor:'pointer', border:'none', textAlign:'left', width:'100%',
-              background: on ? `${C.purple}20` : 'transparent',
-              color: on ? C.purpleL : C.soft,
-              fontWeight: on ? 700 : 500, fontSize:14,
-              transition:'all 0.15s',
+              display:'flex', alignItems:'center', gap:10, padding:'11px 14px', borderRadius:12,
+              cursor:'pointer', border:'none', textAlign:'left', width:'100%',
+              background: on ? `${C.purple}18` : 'transparent',
+              color: on ? C.purpleLt : C.soft, fontWeight: on ? 700 : 500, fontSize:14,
+              transition:'all 0.15s', position:'relative',
             }}>
-              <Icon size={17} />
-              {label}
-              {on && <ChevronRight size={14} style={{ marginLeft:'auto' }} />}
+              {on && <span style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%)', width:3, height:20, background:C.purple, borderRadius:'0 3px 3px 0' }} />}
+              <Icon size={16} />{label}
+              {on && <ChevronRight size={13} style={{ marginLeft:'auto', opacity:0.6 }} />}
             </button>
           )
         })}
       </nav>
 
-      {/* logout */}
       <div style={{ padding:'12px 10px', borderTop:`1px solid ${C.border}` }}>
         <button onClick={onLogout} style={{
-          display:'flex', alignItems:'center', gap:10, padding:'10px 14px',
-          borderRadius:10, cursor:'pointer', border:'none', width:'100%',
-          background:'transparent', color: C.red, fontWeight:600, fontSize:14,
-        }}>
-          <LogOut size={17} />
-          Sair
+          display:'flex', alignItems:'center', gap:10, padding:'10px 14px', borderRadius:12,
+          cursor:'pointer', border:`1px solid ${C.red}20`, width:'100%',
+          background:`${C.red}08`, color: C.red, fontWeight:600, fontSize:13, transition:'all 0.15s',
+        }}
+          onMouseEnter={e=>e.currentTarget.style.background=`${C.red}18`}
+          onMouseLeave={e=>e.currentTarget.style.background=`${C.red}08`}
+        >
+          <LogOut size={15} /> Sair da conta
         </button>
       </div>
     </aside>
@@ -180,20 +211,20 @@ function PeriodBar({ period, setPeriod, customFrom, setCustomFrom, customTo, set
     <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
       {opts.map(([key, label]) => (
         <button key={key} onClick={() => setPeriod(key)} style={{
-          padding:'6px 14px', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:700, border:'none',
-          background: period===key ? C.purple : C.surface,
+          padding:'7px 16px', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:700, outline:'none',
+          background: period===key ? C.purple : 'transparent',
           color: period===key ? 'white' : C.soft,
-          border: period===key ? 'none' : `1px solid ${C.border}`,
+          border: period===key ? `1px solid ${C.purple}` : `1px solid ${C.border}`,
           transition:'all 0.15s',
         }}>{label}</button>
       ))}
       {period === 'custom' && (
         <>
           <input type="date" value={customFrom} onChange={e=>setCustomFrom(e.target.value)}
-            style={{ background:C.surface, border:`1px solid ${C.border}`, color:C.text, borderRadius:8, padding:'5px 10px', fontSize:12, outline:'none' }} />
+            style={{ background:C.surface, border:`1px solid ${C.border}`, color:C.text, borderRadius:10, padding:'6px 12px', fontSize:12, outline:'none' }} />
           <span style={{ color:C.muted, fontSize:12 }}>até</span>
           <input type="date" value={customTo} onChange={e=>setCustomTo(e.target.value)}
-            style={{ background:C.surface, border:`1px solid ${C.border}`, color:C.text, borderRadius:8, padding:'5px 10px', fontSize:12, outline:'none' }} />
+            style={{ background:C.surface, border:`1px solid ${C.border}`, color:C.text, borderRadius:10, padding:'6px 12px', fontSize:12, outline:'none' }} />
         </>
       )}
     </div>
@@ -213,38 +244,36 @@ const STEP_NAMES = {
 const STEP_ORDER = Object.keys(STEP_NAMES)
 
 const SECTION_META = {
-  timeline:  { label:'Linha do Tempo',    Icon: Calendar, color:'#3b82f6' },
-  stars:     { label:'Mapa das Estrelas', Icon: Star,     color:'#f59e0b' },
-  gallery:   { label:'Galeria',           Icon: Camera,   color:'#10b981' },
-  words:     { label:'Jogo de Palavras',  Icon: Gamepad2, color:'#a78bfa' },
-  map:       { label:'Jornada no Mapa',   Icon: Globe,    color:'#06b6d4' },
-  roulette:  { label:'Roleta Surpresa',   Icon: Gift,     color:'#ef4444' },
+  timeline: { label:'Linha do Tempo',    Icon: Calendar, color:'#3b82f6' },
+  stars:    { label:'Mapa das Estrelas', Icon: Star,     color:'#f59e0b' },
+  gallery:  { label:'Galeria',           Icon: Camera,   color:'#10b981' },
+  words:    { label:'Jogo de Palavras',  Icon: Gamepad2, color:'#a78bfa' },
+  map:      { label:'Jornada no Mapa',   Icon: Globe,    color:'#06b6d4' },
+  roulette: { label:'Roleta Surpresa',   Icon: Gift,     color:'#ef4444' },
 }
+
+const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomFrom, customTo, setCustomTo, funnelEvents }) {
   const { from, to } = getPeriod(period, customFrom, customTo)
 
-  // filter by creation date
-  const inPeriod = useMemo(() => filterSites(sites, period, 'created_at', customFrom, customTo), [sites, period, customFrom, customTo])
-  // paid in period (by paid_at)
+  const inPeriod     = useMemo(() => filterSites(sites, period, 'created_at', customFrom, customTo), [sites, period, customFrom, customTo])
   const paidInPeriod = useMemo(() => filterSites(sites.filter(s=>s.paid), period, 'paid_at', customFrom, customTo), [sites, period, customFrom, customTo])
 
-  const revenue = paidInPeriod.length * price
+  const revenue  = paidInPeriod.length * price
   const convRate = inPeriod.length ? Math.round((paidInPeriod.length/inPeriod.length)*100) : 0
 
-  // daily chart data
   const dailyData = useMemo(() => {
     const days = period === 'today' ? 1 : period === 'week' ? 7 : period === 'month' ? 30 : Math.min(30, Math.ceil((to-from)/(1000*60*60*24))+1)
     return Array.from({ length: days }, (_, i) => {
       const d = new Date(to); d.setDate(d.getDate() - (days-1-i)); d.setHours(0,0,0,0)
       const end = new Date(d); end.setHours(23,59,59,999)
-      const reg = sites.filter(s => { const t = new Date(s.created_at); return t>=d && t<=end }).length
+      const reg  = sites.filter(s => { const t = new Date(s.created_at); return t>=d && t<=end }).length
       const paid = sites.filter(s => s.paid && s.paid_at && (()=>{ const t=new Date(s.paid_at); return t>=d && t<=end })()).length
       return { label: fmtShort(d), value: reg, value2: paid }
     })
   }, [sites, period, from, to])
 
-  // funnel events in period
   const funnelInPeriod = useMemo(() => {
     if (!funnelEvents.length) return {}
     return funnelEvents
@@ -252,10 +281,9 @@ function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomF
       .reduce((acc, e) => { acc[e.step]=(acc[e.step]||0)+1; return acc }, {})
   }, [funnelEvents, from, to])
 
-  const maxStep = Math.max(...Object.values(funnelInPeriod), 1)
+  const maxStep     = Math.max(...Object.values(funnelInPeriod), 1)
   const funnelSteps = STEP_ORDER.filter(s => funnelInPeriod[s])
 
-  // sections from quiz_data
   const sectionCounts = useMemo(() => {
     const counts = {}
     sites.forEach(s => { (s.quiz_data?.wrappedSections||[]).forEach(sec => { counts[sec]=(counts[sec]||0)+1 }) })
@@ -263,29 +291,45 @@ function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomF
   }, [sites])
   const maxSec = Math.max(...Object.values(sectionCounts), 1)
 
-  // recent 5 paid
   const recent = useMemo(() => sites.filter(s=>s.paid).slice(0,5), [sites])
 
-  // peak hours
+  // Peak hours — all 24, 1h resolution, labels every 6h
   const hourCounts = useMemo(() => {
     const h = Array(24).fill(0)
-    paidInPeriod.forEach(s => { if (s.paid_at) h[new Date(s.paid_at).getHours()]++ })
+    paidInPeriod.forEach(s => {
+      if (s.paid_at) {
+        // Convert to Brazil timezone hour
+        const brHour = new Date(new Date(s.paid_at).toLocaleString('en-US', { timeZone: TZ })).getHours()
+        h[brHour]++
+      }
+    })
     return h
   }, [paidInPeriod])
-  const peakHours = hourCounts.map((v,i) => ({ label:`${i}h`, value:v }))
 
-  const card = { background:C.surface, borderRadius:16, border:`1px solid ${C.border}`, padding:24 }
-  const cardTitle = { margin:'0 0 18px', fontSize:14, fontWeight:800, color:C.text }
+  const peakHours = hourCounts.map((v, i) => ({ label: `${i}h`, value: v }))
+
+  // Days of week
+  const dayCounts = useMemo(() => {
+    const d = Array(7).fill(0)
+    paidInPeriod.forEach(s => {
+      if (s.paid_at) {
+        const brDay = new Date(new Date(s.paid_at).toLocaleString('en-US', { timeZone: TZ })).getDay()
+        d[brDay]++
+      }
+    })
+    return DAY_NAMES.map((name, i) => ({ label: name, value: d[i] }))
+  }, [paidInPeriod])
+
+  const card      = { background:C.card, borderRadius:18, border:`1px solid ${C.border}`, padding:24 }
+  const cardTitle = { margin:'0 0 18px', fontSize:14, fontWeight:800, color:C.text, letterSpacing:-0.2 }
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
-
-      {/* period */}
       <PeriodBar period={period} setPeriod={setPeriod} customFrom={customFrom} setCustomFrom={setCustomFrom} customTo={customTo} setCustomTo={setCustomTo} />
 
       {/* KPIs */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
-        <KPI label="Receita" value={brl(revenue)} sub={`${paidInPeriod.length} venda${paidInPeriod.length!==1?'s':''}`} color={C.green} Icon={DollarSign} />
+        <KPI label="Receita" value={brl(revenue)} sub={`${paidInPeriod.length} venda${paidInPeriod.length!==1?'s':''} no período`} color={C.green} Icon={DollarSign} />
         <KPI label="PIX gerados" value={inPeriod.length} sub="chegaram ao checkout" color={C.purple} Icon={ShoppingCart} />
         <KPI label="Conversão" value={`${convRate}%`} sub={`${paidInPeriod.length} de ${inPeriod.length} pagaram`} color={C.blue} Icon={Percent} />
         <KPI label="Ticket médio" value={paidInPeriod.length ? brl(revenue/paidInPeriod.length) : '—'} sub="por venda" color={C.amber} Icon={TrendingUp} />
@@ -293,11 +337,10 @@ function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomF
 
       {/* charts row */}
       <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16 }}>
-        {/* sales over time */}
         <div style={card}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
             <p style={{ margin:0, fontSize:14, fontWeight:800, color:C.text }}>Vendas ao longo do tempo</p>
-            <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+            <div style={{ display:'flex', gap:14, alignItems:'center' }}>
               <span style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:C.soft }}><span style={{ width:10,height:10,borderRadius:3,background:C.purple,display:'inline-block' }} /> Registros</span>
               <span style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:C.soft }}><span style={{ width:10,height:10,borderRadius:3,background:C.green,display:'inline-block' }} /> Pagamentos</span>
             </div>
@@ -305,46 +348,79 @@ function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomF
           <BarChart data={dailyData} color={C.purple} secondary={C.green} height={130} />
         </div>
 
-        {/* funnel pix→paid */}
         <div style={card}>
           <p style={cardTitle}>Funil de Conversão</p>
-          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
             <HBar label="Gerou PIX" value={inPeriod.length} max={Math.max(inPeriod.length,1)} color={C.purple} sub="clientes" />
             <HBar label="Pagou" value={paidInPeriod.length} max={Math.max(inPeriod.length,1)} color={C.green} sub={`(${convRate}%)`} />
             <HBar label="Desistiu" value={Math.max(inPeriod.length-paidInPeriod.length,0)} max={Math.max(inPeriod.length,1)} color={C.red} sub={`(${100-convRate}%)`} />
           </div>
-          <div style={{ marginTop:20, padding:'12px 16px', background:`${C.green}10`, borderRadius:10, border:`1px solid ${C.green}25`, textAlign:'center' }}>
-            <p style={{ margin:0, fontSize:22, fontWeight:900, color:C.green }}>{convRate}%</p>
-            <p style={{ margin:0, fontSize:11, color:C.muted }}>taxa de conversão</p>
+          <div style={{ marginTop:20, padding:'14px 16px', background:`${C.green}0e`, borderRadius:12, border:`1px solid ${C.green}22`, textAlign:'center' }}>
+            <p style={{ margin:0, fontSize:26, fontWeight:900, color:C.green, letterSpacing:-1 }}>{convRate}%</p>
+            <p style={{ margin:0, fontSize:11, color:C.muted, marginTop:2 }}>taxa de conversão</p>
           </div>
         </div>
       </div>
 
+      {/* time analysis row */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        {/* peak hours — 1h resolution */}
+        <div style={card}>
+          <p style={cardTitle}>Horário de pico — vendas por hora (horário de Brasília)</p>
+          <BarChart data={peakHours} color={C.amber} height={130} labelEvery={6} />
+          <div style={{ display:'flex', justifyContent:'space-between', marginTop:6 }}>
+            {[0,6,12,18,23].map(h => (
+              <span key={h} style={{ fontSize:9, color:C.muted }}>{h}h</span>
+            ))}
+          </div>
+          {(() => {
+            const peak = hourCounts.indexOf(Math.max(...hourCounts))
+            return Math.max(...hourCounts) > 0
+              ? <p style={{ margin:'10px 0 0', fontSize:12, color:C.muted, textAlign:'center' }}>Pico: <strong style={{color:C.amber}}>{peak}h–{peak+1}h</strong> ({hourCounts[peak]} venda{hourCounts[peak]!==1?'s':''})</p>
+              : <p style={{ margin:'10px 0 0', fontSize:12, color:C.muted, textAlign:'center' }}>Sem dados no período</p>
+          })()}
+        </div>
+
+        {/* days of week */}
+        <div style={card}>
+          <p style={cardTitle}>Vendas por dia da semana</p>
+          <BarChart data={dayCounts} color={C.blue} height={130} />
+          {(() => {
+            const maxDay = Math.max(...dayCounts.map(d=>d.value))
+            const bestIdx = dayCounts.findIndex(d=>d.value===maxDay)
+            return maxDay > 0
+              ? <p style={{ margin:'10px 0 0', fontSize:12, color:C.muted, textAlign:'center' }}>Melhor dia: <strong style={{color:C.blue}}>{DAY_NAMES[bestIdx]}</strong> ({maxDay} venda{maxDay!==1?'s':''})</p>
+              : <p style={{ margin:'10px 0 0', fontSize:12, color:C.muted, textAlign:'center' }}>Sem dados no período</p>
+          })()}
+        </div>
+      </div>
+
       {/* bottom row */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
         {/* quiz funnel */}
         <div style={card}>
           <p style={cardTitle}>Funil do Quiz (onde param)</p>
           {funnelSteps.length === 0 ? (
-            <p style={{ color:C.muted, fontSize:13, textAlign:'center', padding:'20px 0' }}>Aguardando dados de visitas…</p>
+            <p style={{ color:C.muted, fontSize:13, textAlign:'center', padding:'20px 0', lineHeight:1.6 }}>Aguardando dados de visitas…</p>
           ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
               {funnelSteps.map((step, i) => {
                 const count = funnelInPeriod[step] || 0
-                const prev = i > 0 ? (funnelInPeriod[funnelSteps[i-1]] || 1) : count
-                const drop = i > 0 ? Math.round((1 - count/prev)*100) : 0
+                const prev  = i > 0 ? (funnelInPeriod[funnelSteps[i-1]] || 1) : count
+                const drop  = i > 0 ? Math.round((1 - count/prev)*100) : 0
+                const col   = drop>30 ? C.red : drop>15 ? C.amber : C.green
                 return (
                   <div key={step} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <span style={{ fontSize:10, color:C.muted, width:6 }}>{i+1}</span>
+                    <span style={{ fontSize:10, color:C.muted, width:14, textAlign:'center' }}>{i+1}</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
                         <span style={{ fontSize:11, color:C.soft }}>{STEP_NAMES[step]||step}</span>
-                        <span style={{ fontSize:11, fontWeight:700, color: drop>30?C.red:drop>15?C.amber:C.green }}>
-                          {count}{drop>0&&<span style={{fontSize:9,color:C.muted}}> -{drop}%</span>}
+                        <span style={{ fontSize:11, fontWeight:800, color: col }}>
+                          {count}{drop>0 && <span style={{fontSize:9,color:C.muted,fontWeight:400}}> -{drop}%</span>}
                         </span>
                       </div>
-                      <div style={{ height:4, background:`${C.purple}15`, borderRadius:2 }}>
-                        <div style={{ height:'100%', width:`${Math.round((count/maxStep)*100)}%`, background:drop>30?C.red:drop>15?C.amber:C.purple, borderRadius:2 }} />
+                      <div style={{ height:4, background:`${C.purple}12`, borderRadius:2 }}>
+                        <div style={{ height:'100%', width:`${Math.round((count/maxStep)*100)}%`, background:col, borderRadius:2, transition:'width 0.5s' }} />
                       </div>
                     </div>
                   </div>
@@ -357,13 +433,13 @@ function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomF
         {/* sections */}
         <div style={card}>
           <p style={cardTitle}>Seções mais escolhidas</p>
-          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:13 }}>
             {Object.entries(SECTION_META).map(([id, meta]) => {
               const { Icon, label, color } = meta
               const count = sectionCounts[id] || 0
               return (
                 <div key={id} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  <div style={{ width:28, height:28, borderRadius:8, background:`${color}18`, display:'flex', alignItems:'center', justifyContent:'center', shrink:0 }}>
+                  <div style={{ width:30, height:30, borderRadius:8, background:`${color}15`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, border:`1px solid ${color}20` }}>
                     <Icon size={13} color={color} />
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
@@ -371,26 +447,14 @@ function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomF
                       <span style={{ fontSize:12, color:C.soft }}>{label}</span>
                       <span style={{ fontSize:12, fontWeight:800, color }}>{count}</span>
                     </div>
-                    <div style={{ height:4, background:`${color}15`, borderRadius:2 }}>
-                      <div style={{ height:'100%', width:`${maxSec?Math.round((count/maxSec)*100):0}%`, background:color, borderRadius:2 }} />
+                    <div style={{ height:4, background:`${color}12`, borderRadius:2 }}>
+                      <div style={{ height:'100%', width:`${maxSec?Math.round((count/maxSec)*100):0}%`, background:color, borderRadius:2, transition:'width 0.5s' }} />
                     </div>
                   </div>
                 </div>
               )
             })}
           </div>
-        </div>
-
-        {/* peak hours */}
-        <div style={card}>
-          <p style={cardTitle}>Horário de pico (vendas)</p>
-          <BarChart data={peakHours.filter((_,i)=>i%2===0).map((d,i)=>({...d,label:`${i*2}h`}))} color={C.amber} height={130} />
-          {(() => {
-            const peak = hourCounts.indexOf(Math.max(...hourCounts))
-            return Math.max(...hourCounts) > 0
-              ? <p style={{ margin:'14px 0 0', fontSize:12, color:C.muted, textAlign:'center' }}>Pico: <strong style={{color:C.amber}}>{peak}h–{peak+1}h</strong></p>
-              : <p style={{ margin:'14px 0 0', fontSize:12, color:C.muted, textAlign:'center' }}>Sem dados no período</p>
-          })()}
         </div>
       </div>
 
@@ -402,21 +466,22 @@ function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomF
         ) : (
           <div style={{ display:'flex', flexDirection:'column' }}>
             {recent.map((site, i) => {
-              const qd = site.quiz_data || {}
+              const qd     = site.quiz_data || {}
               const couple = [qd.myName, qd.partnerName].filter(Boolean).join(' e ') || '—'
+              const ini    = initials(qd.myName)
               return (
-                <div key={site.id} style={{ display:'flex', alignItems:'center', gap:16, padding:'12px 0', borderBottom: i<recent.length-1 ? `1px solid ${C.border}` : 'none' }}>
-                  <div style={{ width:36, height:36, borderRadius:10, background:`${C.green}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <span style={{ fontSize:12, fontWeight:900, color:C.green }}>✓</span>
+                <div key={site.id} style={{ display:'flex', alignItems:'center', gap:14, padding:'13px 0', borderBottom: i<recent.length-1 ? `1px solid ${C.border}` : 'none' }}>
+                  <div style={{ width:38, height:38, borderRadius:12, background:`linear-gradient(135deg, ${C.purple}50, ${C.pink}50)`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <span style={{ fontSize:13, fontWeight:900, color:'white' }}>{ini}</span>
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.text }}>{couple}</p>
                     <p style={{ margin:0, fontSize:11, color:C.muted }}>{maskPhone(site.phone)}</p>
                   </div>
-                  <p style={{ margin:0, fontSize:13, fontWeight:800, color:C.green }}>{brl(price)}</p>
+                  <p style={{ margin:0, fontSize:14, fontWeight:800, color:C.green }}>{brl(price)}</p>
                   <p style={{ margin:0, fontSize:11, color:C.muted }}>{fmt(site.paid_at)}</p>
                   <a href={`/${site.phone}`} target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize:11, color:C.purpleL, textDecoration:'none', fontWeight:700, background:`${C.purple}15`, border:`1px solid ${C.purple}30`, borderRadius:6, padding:'4px 10px' }}>
+                    style={{ fontSize:11, color:C.purpleL, textDecoration:'none', fontWeight:700, background:`${C.purple}12`, border:`1px solid ${C.purple}25`, borderRadius:8, padding:'5px 12px' }}>
                     Ver ↗
                   </a>
                 </div>
@@ -429,99 +494,358 @@ function DashboardView({ sites, price, period, setPeriod, customFrom, setCustomF
   )
 }
 
-/* ── Clients view ───────────────────────────────────────────────── */
-function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFrom, customTo, setCustomTo }) {
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all')
+/* ── Copy button ────────────────────────────────────────────────── */
+function CopyBtn({ text, label = 'Copiar', icon: Icon = Copy, color = C.purpleL, bg = C.purple, small }) {
+  const [copied, setCopied] = useState(false)
+  const doCopy = (e) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
+  const p = small ? '4px 8px' : '6px 12px'
+  return (
+    <button onClick={doCopy} title={label} style={{
+      background: copied ? `${C.green}18` : `${bg}12`,
+      border: `1px solid ${copied ? C.green : bg}25`,
+      color: copied ? C.green : color,
+      borderRadius:8, padding:p, cursor:'pointer', fontSize:11, fontWeight:700,
+      display:'flex', alignItems:'center', gap:4, whiteSpace:'nowrap', transition:'all 0.15s', flexShrink:0,
+    }}>
+      {copied ? <Check size={12} /> : <Icon size={12} />}
+      {copied ? 'Copiado!' : label}
+    </button>
+  )
+}
 
-  const inPeriod = filterSites(sites, period, 'created_at', customFrom, customTo)
-  const filtered = inPeriod.filter(s => {
-    const q = search.toLowerCase()
-    const name = `${s.quiz_data?.myName||''} ${s.quiz_data?.partnerName||''}`.toLowerCase()
-    const matchSearch = !q || s.phone.includes(q) || name.includes(q)
-    const matchFilter = filter==='all' || (filter==='paid' ? s.paid : !s.paid)
-    return matchSearch && matchFilter
-  })
+/* ── Preview modal ──────────────────────────────────────────────── */
+function PreviewModal({ site, onClose }) {
+  const origin = window.location.origin
+  const qd     = site.quiz_data || {}
+  const couple = [qd.myName, qd.partnerName].filter(Boolean).join(' e ') || '—'
+  const access = `${origin}/${site.phone}`
+  const edit   = `${origin}/edit/${site.phone}`
+  const waMsg  = `Olá! 🎉 Seu pagamento foi efetuado com sucesso!\n\nAcesse seu presente aqui:\n${access}\n\nSe quiser editar algo, use este link:\n${edit}`
+  const waUrl  = `https://wa.me/55${site.phone}?text=${encodeURIComponent(waMsg)}`
+  const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(access)}&format=png&margin=10&color=7c3aed&bgcolor=FFFFFF`
+
+  const row    = { display:'flex', flexDirection:'column', gap:6 }
+  const lbl    = { margin:0, fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }
+  const linkBox = { display:'flex', alignItems:'center', gap:8, background:C.surface, border:`1px solid ${C.border}`, borderRadius:10, padding:'9px 14px' }
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-      <PeriodBar period={period} setPeriod={setPeriod} customFrom={customFrom} setCustomFrom={setCustomFrom} customTo={customTo} setCustomTo={setCustomTo} />
-
-      {/* toolbar */}
-      <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
-        <input placeholder="Buscar por telefone ou nome..." value={search} onChange={e=>setSearch(e.target.value)}
-          style={{ flex:1, minWidth:260, background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'9px 16px', color:C.text, fontSize:14, outline:'none' }} />
-        {[['all','Todos'],['paid','Pagos'],['pending','Pendentes']].map(([f,l])=>(
-          <button key={f} onClick={()=>setFilter(f)} style={{
-            padding:'8px 18px', borderRadius:10, cursor:'pointer', fontSize:13, fontWeight:700, border:'none',
-            background: filter===f ? `${C.purple}25` : C.surface,
-            color: filter===f ? C.purpleL : C.muted,
-            border: filter===f ? `1.5px solid ${C.purple}` : `1.5px solid ${C.border}`,
-          }}>{l}</button>
-        ))}
-        <span style={{ fontSize:12, color:C.muted }}>{filtered.length} resultado{filtered.length!==1?'s':''}</span>
-      </div>
-
-      {/* table */}
-      <div style={{ background:C.surface, borderRadius:16, border:`1px solid ${C.border}`, overflow:'hidden' }}>
-        <div style={{ display:'grid', gridTemplateColumns:'170px 190px 1fr 110px 150px 150px 90px', background:'#0c0c14', borderBottom:`1px solid ${C.border}` }}>
-          {['Telefone','Casal','Título','Status','Cadastro','Pagamento','Ações'].map(h=>(
-            <div key={h} style={{ padding:'11px 16px', fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.8 }}>{h}</div>
-          ))}
-        </div>
-        {filtered.length===0 && (
-          <div style={{ padding:'50px 32px', textAlign:'center' }}>
-            <p style={{ color:C.muted, margin:0, fontSize:14 }}>Nenhum cliente encontrado.</p>
+    <div onClick={e=>{ if (e.target===e.currentTarget) onClose() }} style={{
+      position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', zIndex:300,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:20,
+    }}>
+      <div style={{ background:C.card, borderRadius:20, width:'100%', maxWidth:540, border:`1px solid ${C.border}`, maxHeight:'92vh', overflowY:'auto' }}>
+        {/* header */}
+        <div style={{ padding:'20px 24px 16px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div>
+            <p style={{ margin:0, fontSize:16, fontWeight:900, color:C.text }}>{couple}</p>
+            <p style={{ margin:0, fontSize:12, color:C.muted, marginTop:2 }}>{maskPhone(site.phone)} · {site.paid ? <span style={{color:C.green}}>✓ Pago</span> : <span style={{color:C.amber}}>⏳ Pendente</span>}</p>
           </div>
-        )}
-        {filtered.map((site,i) => {
-          const qd = site.quiz_data||{}
-          const couple = [qd.myName, qd.partnerName].filter(Boolean).join(' e ')||'—'
-          return (
-            <div key={site.id} style={{ display:'grid', gridTemplateColumns:'170px 190px 1fr 110px 150px 150px 90px', borderBottom: i<filtered.length-1 ? `1px solid ${C.border}` : 'none', alignItems:'center', transition:'background 0.12s' }}
-              onMouseEnter={e=>e.currentTarget.style.background='#ffffff05'}
-              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-              <div style={{ padding:'14px 16px' }}>
-                <p style={{ margin:0, fontSize:12, fontWeight:700, color:C.text, fontFamily:'monospace' }}>{maskPhone(site.phone)}</p>
-              </div>
-              <div style={{ padding:'14px 16px' }}>
-                <p style={{ margin:0, fontSize:12, color:C.soft, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{couple}</p>
-              </div>
-              <div style={{ padding:'14px 16px' }}>
-                <p style={{ margin:0, fontSize:12, color:C.muted, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{qd.title||'—'}</p>
-              </div>
-              <div style={{ padding:'14px 16px' }}>
-                <span style={{ fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:20, background: site.paid?`${C.green}18`:`${C.amber}18`, color: site.paid?C.green:C.amber, border:`1px solid ${site.paid?C.green:C.amber}30` }}>
-                  {site.paid?'Pago':'Pendente'}
-                </span>
-              </div>
-              <div style={{ padding:'14px 16px' }}><p style={{ margin:0, fontSize:11, color:C.muted }}>{fmt(site.created_at)}</p></div>
-              <div style={{ padding:'14px 16px' }}><p style={{ margin:0, fontSize:11, color:site.paid_at?C.green:C.muted }}>{fmt(site.paid_at)}</p></div>
-              <div style={{ padding:'14px 16px' }}>
-                <a href={`/${site.phone}`} target="_blank" rel="noopener noreferrer"
-                  style={{ background:`${C.purple}20`, color:C.purpleL, border:`1px solid ${C.purple}40`, borderRadius:7, padding:'4px 10px', fontSize:11, fontWeight:700, textDecoration:'none' }}>
-                  Ver ↗
-                </a>
-              </div>
+          <button onClick={onClose} style={{ background:`${C.red}12`, border:`1px solid ${C.red}25`, color:C.red, borderRadius:8, padding:'6px 10px', cursor:'pointer', fontSize:13, fontWeight:700 }}>✕</button>
+        </div>
+
+        <div style={{ padding:24, display:'flex', flexDirection:'column', gap:20 }}>
+
+          {/* access link */}
+          <div style={row}>
+            <p style={lbl}>🔗 Link de acesso (cliente)</p>
+            <div style={linkBox}>
+              <span style={{ flex:1, fontSize:12, color:C.soft, fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{access}</span>
+              <CopyBtn text={access} label="Copiar" small />
             </div>
-          )
-        })}
+            <a href={access} target="_blank" rel="noopener noreferrer" style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              background:`${C.purple}18`, border:`1px solid ${C.purple}30`, color:C.purpleL,
+              borderRadius:10, padding:'10px', textDecoration:'none', fontSize:13, fontWeight:700,
+            }}>
+              <ExternalLink size={14} /> Abrir site do cliente ↗
+            </a>
+          </div>
+
+          {/* edit link */}
+          <div style={row}>
+            <p style={lbl}>✏️ Link de edição (cliente pode reeditar)</p>
+            <div style={linkBox}>
+              <span style={{ flex:1, fontSize:12, color:C.soft, fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{edit}</span>
+              <CopyBtn text={edit} label="Copiar" color={C.amber} bg={C.amber} small />
+            </div>
+            <p style={{ margin:0, fontSize:11, color:C.muted, lineHeight:1.5 }}>Ao abrir, o quiz abre com os dados do cliente preenchidos. Ele pode trocar fotos, textos, etc. e pagar novamente.</p>
+          </div>
+
+          {/* whatsapp */}
+          <div style={row}>
+            <p style={lbl}>💬 Mensagem WhatsApp (pré-pronta)</p>
+            <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:10, padding:'12px 14px' }}>
+              <pre style={{ margin:0, fontSize:12, color:C.soft, whiteSpace:'pre-wrap', lineHeight:1.7, fontFamily:'inherit' }}>{waMsg}</pre>
+            </div>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              background:`${C.wa}18`, border:`1px solid ${C.wa}30`, color:C.wa,
+              borderRadius:10, padding:'10px', textDecoration:'none', fontSize:13, fontWeight:700,
+            }}>
+              <MessageCircle size={14} /> Enviar no WhatsApp ↗
+            </a>
+          </div>
+
+          {/* QR Code */}
+          <div style={row}>
+            <p style={lbl}>📱 QR Code do presente</p>
+            <div style={{ background:'white', borderRadius:14, padding:20, display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+              <img src={qrUrl} alt="QR Code" width={180} height={180} style={{ borderRadius:8, display:'block' }} />
+              <p style={{ margin:0, fontSize:12, color:'#475569', textAlign:'center' }}>Quando escaneado, abre direto o site personalizado</p>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   )
 }
 
-/* ── Settings view ──────────────────────────────────────────────── */
+/* ── Clients view ───────────────────────────────────────────────── */
+function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFrom, customTo, setCustomTo }) {
+  const [search,  setSearch]  = useState('')
+  const [filter,  setFilter]  = useState('all')
+  const [preview, setPreview] = useState(null) // site object
+
+  const origin   = window.location.origin
+  const inPeriod = filterSites(sites, period, 'created_at', customFrom, customTo)
+  const filtered = inPeriod.filter(s => {
+    const q        = search.toLowerCase()
+    const name     = `${s.quiz_data?.myName||''} ${s.quiz_data?.partnerName||''}`.toLowerCase()
+    const matchSrc = !q || s.phone.includes(q) || name.includes(q)
+    const matchFil = filter==='all' || (filter==='paid' ? s.paid : !s.paid)
+    return matchSrc && matchFil
+  })
+
+  function waLink(phone, accessUrl, editUrl) {
+    const msg = `Olá! 🎉 Seu pagamento foi efetuado com sucesso!\n\nAcesse seu presente aqui:\n${accessUrl}\n\nSe quiser editar algo, use este link:\n${editUrl}`
+    return `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`
+  }
+
+  const COLS = '44px 155px 175px minmax(100px,1fr) 95px 200px'
+  const thStyle = { padding:'10px 14px', fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.9, whiteSpace:'nowrap' }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      {preview && <PreviewModal site={preview} onClose={()=>setPreview(null)} />}
+
+      <PeriodBar period={period} setPeriod={setPeriod} customFrom={customFrom} setCustomFrom={setCustomFrom} customTo={customTo} setCustomTo={setCustomTo} />
+
+      <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+        <div style={{ flex:1, minWidth:240, position:'relative' }}>
+          <Search size={14} style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', color:C.muted, pointerEvents:'none' }} />
+          <input placeholder="Buscar por telefone ou nome..." value={search} onChange={e=>setSearch(e.target.value)}
+            style={{ width:'100%', background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:12, padding:'10px 14px 10px 38px', color:C.text, fontSize:13, outline:'none', boxSizing:'border-box' }} />
+        </div>
+        <div style={{ display:'flex', gap:6 }}>
+          {[['all','Todos'],['paid','Pagos ✅'],['pending','Pendentes ⏳']].map(([f,l])=>(
+            <button key={f} onClick={()=>setFilter(f)} style={{
+              padding:'9px 16px', borderRadius:10, cursor:'pointer', fontSize:12, fontWeight:700, outline:'none',
+              background: filter===f ? `${C.purple}20` : 'transparent',
+              color: filter===f ? C.purpleL : C.muted,
+              border: filter===f ? `1.5px solid ${C.purple}50` : `1.5px solid ${C.border}`,
+              transition:'all 0.15s',
+            }}>{l}</button>
+          ))}
+        </div>
+        <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>{filtered.length} resultado{filtered.length!==1?'s':''}</span>
+      </div>
+
+      {/* table — scrollable so buttons never get cut */}
+      <div style={{ background:C.card, borderRadius:18, border:`1px solid ${C.border}` }}>
+        <div style={{ overflowX:'auto', borderRadius:18 }}>
+          <div style={{ minWidth:820 }}>
+            {/* header */}
+            <div style={{ display:'grid', gridTemplateColumns:COLS, background:C.bg, borderRadius:'18px 18px 0 0', borderBottom:`1px solid ${C.border}` }}>
+              {['', 'Telefone', 'Casal', 'Título', 'Status', 'Ações'].map(h=>(
+                <div key={h} style={thStyle}>{h}</div>
+              ))}
+            </div>
+
+            {filtered.length===0 && (
+              <div style={{ padding:'60px 32px', textAlign:'center' }}>
+                <div style={{ fontSize:32, marginBottom:12 }}>🔍</div>
+                <p style={{ color:C.muted, margin:0, fontSize:14 }}>Nenhum cliente encontrado.</p>
+              </div>
+            )}
+
+            {filtered.map((site, i) => {
+              const qd     = site.quiz_data || {}
+              const couple = [qd.myName, qd.partnerName].filter(Boolean).join(' e ') || '—'
+              const ini    = initials(qd.myName || couple)
+              const access = `${origin}/${site.phone}`
+              const edit   = `${origin}/edit/${site.phone}`
+
+              return (
+                <div key={site.id}
+                  style={{ display:'grid', gridTemplateColumns:COLS, borderBottom: i<filtered.length-1 ? `1px solid ${C.border}` : 'none', alignItems:'center', transition:'background 0.12s', borderRadius: i===filtered.length-1 ? '0 0 18px 18px' : 0 }}
+                  onMouseEnter={e=>e.currentTarget.style.background='#ffffff07'}
+                  onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                >
+                  {/* avatar */}
+                  <div style={{ padding:'11px 0 11px 12px' }}>
+                    <div style={{ width:30, height:30, borderRadius:9, background:`linear-gradient(135deg, ${C.purple}60, ${C.pink}60)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <span style={{ fontSize:10, fontWeight:900, color:'white' }}>{ini}</span>
+                    </div>
+                  </div>
+                  {/* phone */}
+                  <div style={{ padding:'11px 14px' }}>
+                    <p style={{ margin:0, fontSize:12, fontWeight:700, color:C.text, fontFamily:'monospace' }}>{maskPhone(site.phone)}</p>
+                    <p style={{ margin:0, fontSize:10, color:C.muted, marginTop:2 }}>{fmt(site.created_at)}</p>
+                  </div>
+                  {/* couple */}
+                  <div style={{ padding:'11px 14px' }}>
+                    <p style={{ margin:0, fontSize:12, color:C.soft, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{couple}</p>
+                    {site.paid_at && <p style={{ margin:0, fontSize:10, color:C.greenL, marginTop:2 }}>pago {fmt(site.paid_at)}</p>}
+                  </div>
+                  {/* title */}
+                  <div style={{ padding:'11px 14px' }}>
+                    <p style={{ margin:0, fontSize:12, color:C.muted, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{qd.title||'—'}</p>
+                  </div>
+                  {/* status */}
+                  <div style={{ padding:'11px 14px' }}>
+                    <span style={{ fontSize:10, fontWeight:700, padding:'4px 10px', borderRadius:20, display:'inline-block',
+                      background: site.paid ? `${C.green}15` : `${C.amber}15`,
+                      color: site.paid ? C.green : C.amber,
+                      border:`1px solid ${site.paid ? C.green : C.amber}28`,
+                    }}>
+                      {site.paid ? '✓ Pago' : '⏳ Pend.'}
+                    </span>
+                  </div>
+                  {/* actions */}
+                  <div style={{ padding:'8px 12px', display:'flex', alignItems:'center', gap:5 }}>
+                    {/* WhatsApp */}
+                    <a href={waLink(site.phone, access, edit)} target="_blank" rel="noopener noreferrer" title="Enviar no WhatsApp"
+                      style={{ display:'flex', alignItems:'center', gap:4, background:`${C.wa}15`, border:`1px solid ${C.wa}28`, color:C.wa, borderRadius:8, padding:'5px 9px', textDecoration:'none', fontSize:11, fontWeight:700, whiteSpace:'nowrap', transition:'all 0.15s', flexShrink:0 }}
+                      onMouseEnter={e=>e.currentTarget.style.background=`${C.wa}28`}
+                      onMouseLeave={e=>e.currentTarget.style.background=`${C.wa}15`}
+                    >
+                      <MessageCircle size={12} /> WA
+                    </a>
+                    {/* Ver site */}
+                    <a href={access} target="_blank" rel="noopener noreferrer" title="Ver site do cliente"
+                      style={{ display:'flex', alignItems:'center', gap:4, background:`${C.purple}12`, border:`1px solid ${C.purple}28`, color:C.purpleL, borderRadius:8, padding:'5px 9px', textDecoration:'none', fontSize:11, fontWeight:700, whiteSpace:'nowrap', transition:'all 0.15s', flexShrink:0 }}
+                      onMouseEnter={e=>e.currentTarget.style.background=`${C.purple}22`}
+                      onMouseLeave={e=>e.currentTarget.style.background=`${C.purple}12`}
+                    >
+                      <ExternalLink size={12} /> Ver
+                    </a>
+                    {/* Copy edit link */}
+                    <CopyBtn text={edit} label="Editar" icon={Pencil} color={C.amber} bg={C.amber} small />
+                    {/* Preview modal */}
+                    <button onClick={()=>setPreview(site)} title="Ver todos os links" style={{
+                      display:'flex', alignItems:'center', gap:4, background:`${C.blue}12`, border:`1px solid ${C.blue}28`, color:C.blue,
+                      borderRadius:8, padding:'5px 9px', cursor:'pointer', fontSize:11, fontWeight:700, whiteSpace:'nowrap', flexShrink:0, transition:'all 0.15s',
+                    }}
+                      onMouseEnter={e=>e.currentTarget.style.background=`${C.blue}22`}
+                      onMouseLeave={e=>e.currentTarget.style.background=`${C.blue}12`}
+                    >
+                      <Link2 size={12} /> Links
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display:'flex', gap:20, alignItems:'center', padding:'0 4px', flexWrap:'wrap' }}>
+        <span style={{ fontSize:11, color:C.muted, display:'flex', alignItems:'center', gap:5 }}><MessageCircle size={12} color={C.wa} /> WA = abre WhatsApp com confirmação + links</span>
+        <span style={{ fontSize:11, color:C.muted, display:'flex', alignItems:'center', gap:5 }}><Pencil size={12} color={C.amber} /> Editar = copia link de edição para enviar ao cliente</span>
+        <span style={{ fontSize:11, color:C.muted, display:'flex', alignItems:'center', gap:5 }}><Link2 size={12} color={C.blue} /> Links = abre modal com todos os links + QR code</span>
+      </div>
+    </div>
+  )
+}
+
+/* ── Settings sub-tabs ──────────────────────────────────────────── */
+function SettingsTabs({ active, setActive }) {
+  const tabs = [
+    { id:'produto', label:'Produto',    Icon: Package },
+    { id:'pixel',   label:'Pixels & APIs', Icon: Tv2 },
+    { id:'links',   label:'Links',      Icon: Link2 },
+  ]
+  return (
+    <div style={{ display:'flex', gap:6, marginBottom:24, borderBottom:`1px solid ${C.border}`, paddingBottom:0 }}>
+      {tabs.map(({ id, label, Icon }) => {
+        const on = active === id
+        return (
+          <button key={id} onClick={()=>setActive(id)} style={{
+            display:'flex', alignItems:'center', gap:8, padding:'10px 18px',
+            borderRadius:0, cursor:'pointer', border:'none', background:'transparent',
+            color: on ? C.purpleLt : C.soft, fontWeight: on ? 700 : 500, fontSize:13,
+            borderBottom: on ? `2px solid ${C.purple}` : '2px solid transparent',
+            marginBottom:-1, transition:'all 0.15s',
+          }}>
+            <Icon size={14} />{label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function ConfigField({ label, value, onChange, placeholder, type = 'text', hint }) {
+  const inp = { background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'11px 16px', color:C.text, fontSize:14, outline:'none', boxSizing:'border-box', width:'100%', transition:'border-color 0.15s' }
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+      <label style={{ fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1 }}>{label}</label>
+      <input type={type} style={inp} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
+        onFocus={e=>e.target.style.borderColor=C.purple} onBlur={e=>e.target.style.borderColor=C.border} />
+      {hint && <p style={{ margin:0, fontSize:11, color:C.muted, lineHeight:1.5 }}>{hint}</p>}
+    </div>
+  )
+}
+
+function SaveBtn({ status, onClick, label = 'Salvar', color = C.purple }) {
+  return (
+    <button onClick={onClick} style={{
+      background:`${color}18`, border:`1.5px solid ${color}35`, color,
+      borderRadius:10, padding:'10px 24px', cursor:'pointer', fontSize:13, fontWeight:700,
+      whiteSpace:'nowrap', transition:'all 0.15s', display:'flex', alignItems:'center', gap:8,
+    }}
+      onMouseEnter={e=>e.currentTarget.style.background=`${color}30`}
+      onMouseLeave={e=>e.currentTarget.style.background=`${color}18`}
+    >
+      {status==='saving' ? <><div style={{ width:14,height:14,border:`2px solid ${color}40`,borderTop:`2px solid ${color}`,borderRadius:'50%',animation:'spin 0.7s linear infinite' }} /> Salvando…</> :
+       status==='saved'  ? <><Check size={14} /> Salvo!</> : label}
+    </button>
+  )
+}
+
 function SettingsView({ price, onPriceChange }) {
-  const [priceInput, setPriceInput]   = useState(String(price).replace('.', ','))
-  const [pixelId,    setPixelId]      = useState('')
-  const [freePhone,  setFreePhone]    = useState('')
-  const [status, setStatus]           = useState({}) // { price, pixel, free }
-  const [freeLink,   setFreeLink]     = useState(null)
+  const [tab, setTab] = useState('produto')
+
+  // Produto
+  const [priceInput, setPriceInput] = useState(String(price).replace('.', ','))
+
+  // Pixel
+  const [pixelId,   setPixelId]   = useState('')
+  const [fbToken,   setFbToken]   = useState('')
+  const [ttPixelId, setTtPixelId] = useState('')
+
+  // Links
+  const [freePhone, setFreePhone] = useState('')
+  const [freeLink,  setFreeLink]  = useState(null)
+
+  const [status, setStatus] = useState({})
 
   useEffect(() => {
-    getAppConfig('pixel_id').then(v => { if (v) setPixelId(v) })
-    getAppConfig('price').then(v => { if (v) setPriceInput(String(parseFloat(v)).replace('.', ',')) })
+    Promise.all([
+      getAppConfig('pixel_id'),
+      getAppConfig('fb_access_token'),
+      getAppConfig('tiktok_pixel_id'),
+      getAppConfig('price'),
+    ]).then(([pid, fbt, ttid, p]) => {
+      if (pid)  setPixelId(pid)
+      if (fbt)  setFbToken(fbt)
+      if (ttid) setTtPixelId(ttid)
+      if (p)    setPriceInput(String(parseFloat(p)).replace('.', ','))
+    })
   }, [])
 
   const save = async (key, value, field) => {
@@ -531,9 +855,7 @@ function SettingsView({ price, onPriceChange }) {
       if (key==='price') onPriceChange(parseFloat(value.replace(',','.')))
       setStatus(s => ({ ...s, [field]:'saved' }))
       setTimeout(() => setStatus(s => ({ ...s, [field]:null })), 2500)
-    } catch {
-      setStatus(s => ({ ...s, [field]:'error' }))
-    }
+    } catch { setStatus(s => ({ ...s, [field]:'error' })) }
   }
 
   const genFree = async () => {
@@ -547,74 +869,137 @@ function SettingsView({ price, onPriceChange }) {
     } catch { setStatus(s => ({ ...s, free:'error' })) }
   }
 
-  const inp = { background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'10px 16px', color:C.text, fontSize:14, outline:'none', boxSizing:'border-box' }
-  const btn = (col=C.purple) => ({ background:`${col}20`, border:`1px solid ${col}40`, color:col, borderRadius:10, padding:'10px 20px', cursor:'pointer', fontSize:13, fontWeight:700, whiteSpace:'nowrap' })
-  const card = { background:C.surface, borderRadius:16, border:`1px solid ${C.border}`, padding:28 }
-  const cardTitle = (col=C.text) => ({ margin:'0 0 6px', fontSize:16, fontWeight:900, color:col })
-  const cardSub   = { margin:'0 0 20px', fontSize:13, color:C.muted }
-  const label     = { margin:'0 0 6px', fontSize:11, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:1, display:'block' }
+  const card = { background:C.card, borderRadius:18, border:`1px solid ${C.border}`, padding:28, display:'flex', flexDirection:'column', gap:20 }
+  const section = (title, sub, color=C.text) => (
+    <div>
+      <p style={{ margin:'0 0 4px', fontSize:17, fontWeight:900, color, letterSpacing:-0.3 }}>{title}</p>
+      {sub && <p style={{ margin:0, fontSize:13, color:C.muted, lineHeight:1.6 }}>{sub}</p>}
+    </div>
+  )
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:24, maxWidth:720 }}>
+    <div style={{ maxWidth:760 }}>
+      <SettingsTabs active={tab} setActive={setTab} />
 
-      {/* price */}
-      <div style={card}>
-        <p style={cardTitle()}>Preço do produto</p>
-        <p style={cardSub}>Valor usado nos cálculos de receita do dashboard. Altere aqui e o dashboard atualiza na hora.</p>
-        <span style={label}>Preço base (R$)</span>
-        <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-          <input style={{ ...inp, width:160 }} value={priceInput} onChange={e=>setPriceInput(e.target.value)} placeholder="19,90" />
-          <button style={btn(C.green)} onClick={() => save('price', priceInput, 'price')}>
-            {status.price==='saving'?'Salvando…':status.price==='saved'?'✓ Salvo':'Salvar'}
-          </button>
-        </div>
-        {status.price==='error' && <p style={{ color:C.red, fontSize:12, marginTop:8 }}>Erro ao salvar.</p>}
-      </div>
-
-      {/* pixel */}
-      <div style={card}>
-        <p style={cardTitle()}>Facebook / Meta Pixel</p>
-        <p style={cardSub}>
-          Ao salvar o ID aqui, o pixel é injetado automaticamente em todas as visitas dos clientes.<br/>
-          Eventos: <strong style={{color:C.purpleL}}>InitiateCheckout</strong> (chega no pagamento) · <strong style={{color:C.green}}>Purchase</strong> (PIX confirmado)
-        </p>
-        <span style={label}>Pixel ID</span>
-        <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-          <input style={{ ...inp, flex:1 }} value={pixelId} onChange={e=>setPixelId(e.target.value)} placeholder="Ex: 1234567890123456" />
-          <button style={btn()} onClick={() => save('pixel_id', pixelId.trim(), 'pixel')}>
-            {status.pixel==='saving'?'Salvando…':status.pixel==='saved'?'✓ Salvo':'Salvar'}
-          </button>
-        </div>
-        {status.pixel==='error' && <p style={{ color:C.red, fontSize:12, marginTop:8 }}>Erro ao salvar. Verifique o Supabase (tabela app_config).</p>}
-        <div style={{ marginTop:18, background:C.bg, borderRadius:10, padding:'12px 18px', fontFamily:'monospace', fontSize:12, color:'#86efac', lineHeight:2 }}>
-          {'-- Execute no Supabase SQL Editor:'}<br/>
-          {'create table app_config (key text primary key, value text);'}<br/>
-          {'create table funnel_events (id bigint generated always as identity primary key, step text not null, created_at timestamptz default now());'}
-        </div>
-      </div>
-
-      {/* free link */}
-      <div style={card}>
-        <p style={cardTitle(C.green)}>Gerar link gratuito</p>
-        <p style={cardSub}>Cria um site já marcado como pago. Útil para testes, demonstrações ou clientes especiais.</p>
-        <span style={label}>WhatsApp (DDD + número, 11 dígitos)</span>
-        <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-          <input style={{ ...inp, flex:1 }} value={freePhone} onChange={e=>setFreePhone(e.target.value.replace(/\D/g,''))} placeholder="Ex: 31999991234" maxLength={11} />
-          <button style={btn(C.green)} disabled={freePhone.replace(/\D/g,'').length<10} onClick={genFree}>
-            {status.free==='loading'?'Gerando…':'Gerar link'}
-          </button>
-        </div>
-        {freeLink && (
-          <div style={{ marginTop:16, background:`${C.green}12`, border:`1px solid ${C.green}30`, borderRadius:10, padding:'14px 18px', display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-            <span style={{ fontSize:13, color:C.green, fontFamily:'monospace', flex:1, wordBreak:'break-all' }}>{freeLink}</span>
-            <button onClick={()=>navigator.clipboard.writeText(freeLink)}
-              style={{ background:`${C.green}20`, border:`1px solid ${C.green}40`, color:C.green, borderRadius:8, padding:'6px 14px', cursor:'pointer', fontSize:12, fontWeight:700 }}>Copiar</button>
-            <a href={freeLink} target="_blank" rel="noopener noreferrer"
-              style={{ background:`${C.purple}20`, border:`1px solid ${C.purple}40`, color:C.purpleL, borderRadius:8, padding:'6px 14px', fontSize:12, fontWeight:700, textDecoration:'none' }}>Abrir ↗</a>
+      {/* ── Produto ── */}
+      {tab === 'produto' && (
+        <div style={card}>
+          {section('Preço do produto', 'Valor usado nos cálculos de receita. Altere aqui e o dashboard atualiza na hora.')}
+          <ConfigField label="Preço base (R$)" value={priceInput} onChange={setPriceInput} placeholder="19,90" />
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <SaveBtn status={status.price} onClick={()=>save('price', priceInput, 'price')} label="Salvar preço" color={C.green} />
+            {status.price==='error' && <span style={{ color:C.red, fontSize:12 }}>Erro ao salvar.</span>}
           </div>
-        )}
-        {status.free==='error' && <p style={{ color:C.red, fontSize:12, marginTop:8 }}>Erro ao criar. Verifique o Supabase.</p>}
-      </div>
+        </div>
+      )}
+
+      {/* ── Pixels & APIs ── */}
+      {tab === 'pixel' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+
+          {/* Facebook */}
+          <div style={{ ...card, borderColor:`${C.blue}25` }}>
+            {section('Facebook / Meta Pixel', undefined)}
+            <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', background:`${C.blue}0a`, borderRadius:12, border:`1px solid ${C.blue}20` }}>
+              <div style={{ width:32, height:32, borderRadius:8, background:`${C.blue}25`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <span style={{ fontSize:16 }}>f</span>
+              </div>
+              <div>
+                <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.text }}>Pixel + Conversions API (CAPI)</p>
+                <p style={{ margin:0, fontSize:12, color:C.muted }}>Pixel dispara no browser · CAPI dispara no servidor para rastrear bloqueadores de ad</p>
+              </div>
+            </div>
+            <ConfigField label="Pixel ID" value={pixelId} onChange={setPixelId} placeholder="1234567890123456"
+              hint="Encontre em Events Manager → Pixels → seu pixel → Overview" />
+            <ConfigField label="API Access Token (Conversions API)" value={fbToken} onChange={setFbToken} placeholder="EAAabc..."
+              hint="Gere em Events Manager → Pixels → Settings → Conversions API → Generate access token" />
+            <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+              <SaveBtn status={status.pixel} onClick={async()=>{ await save('pixel_id', pixelId.trim(), 'pixel'); await save('fb_access_token', fbToken.trim(), 'pixel') }} label="Salvar Facebook" color={C.blue} />
+              {status.pixel==='error' && <span style={{ color:C.red, fontSize:12 }}>Erro. Verifique o Supabase (tabela app_config).</span>}
+            </div>
+            <div style={{ background:C.bg, borderRadius:12, padding:'14px 18px', display:'flex', flexDirection:'column', gap:8 }}>
+              <p style={{ margin:0, fontSize:12, fontWeight:700, color:C.muted }}>Eventos rastreados automaticamente:</p>
+              <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+                {[['InitiateCheckout','Pixel + CAPI',C.amber],['Purchase','Pixel + CAPI',C.green],['PageView','Pixel',C.blue]].map(([e,m,c])=>(
+                  <span key={e} style={{ fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20, background:`${c}15`, color:c, border:`1px solid ${c}25` }}>{e} <span style={{opacity:0.6}}>· {m}</span></span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* TikTok */}
+          <div style={{ ...card, borderColor:`${C.tt}25` }}>
+            {section('TikTok Pixel', undefined)}
+            <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', background:`${C.tt}0a`, borderRadius:12, border:`1px solid ${C.tt}20` }}>
+              <div style={{ width:32, height:32, borderRadius:8, background:`${C.tt}25`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <span style={{ fontSize:16 }}>♪</span>
+              </div>
+              <div>
+                <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.text }}>TikTok Pixel (client-side)</p>
+                <p style={{ margin:0, fontSize:12, color:C.muted }}>Rastreia InitiateCheckout e CompletePayment automaticamente</p>
+              </div>
+            </div>
+            <ConfigField label="TikTok Pixel ID" value={ttPixelId} onChange={setTtPixelId} placeholder="C1ABCDEFGHIJ..."
+              hint="Encontre em TikTok Ads Manager → Assets → Events → Web Events → Pixel" />
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <SaveBtn status={status.tiktok} onClick={()=>save('tiktok_pixel_id', ttPixelId.trim(), 'tiktok')} label="Salvar TikTok" color={C.tt} />
+              {status.tiktok==='error' && <span style={{ color:C.red, fontSize:12 }}>Erro ao salvar.</span>}
+            </div>
+            <div style={{ background:C.bg, borderRadius:12, padding:'14px 18px', display:'flex', flexDirection:'column', gap:8 }}>
+              <p style={{ margin:0, fontSize:12, fontWeight:700, color:C.muted }}>Eventos rastreados automaticamente:</p>
+              <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+                {[['InitiateCheckout',C.amber],['CompletePayment',C.green],['PageView',C.blue]].map(([e,c])=>(
+                  <span key={e} style={{ fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20, background:`${c}15`, color:c, border:`1px solid ${c}25` }}>{e}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* SQL helper */}
+          <div style={{ background:C.bg, borderRadius:12, padding:'14px 20px', border:`1px solid ${C.border}`, fontFamily:'monospace', fontSize:12, color:'#86efac', lineHeight:2.2 }}>
+            {'-- Execute no Supabase SQL Editor (se ainda não criou):'}<br/>
+            {'create table if not exists app_config (key text primary key, value text);'}<br/>
+            {'create table if not exists funnel_events (id bigint generated always as identity primary key, step text not null, created_at timestamptz default now());'}
+          </div>
+        </div>
+      )}
+
+      {/* ── Links ── */}
+      {tab === 'links' && (
+        <div style={{ ...card, borderColor:`${C.green}25` }}>
+          {section('Gerar link gratuito', 'Cria um site marcado como pago sem passar pelo checkout. Útil para testes ou presentes especiais.', C.green)}
+          <ConfigField label="WhatsApp do cliente (DDD + número, 11 dígitos)" value={freePhone} onChange={v=>setFreePhone(v.replace(/\D/g,''))} placeholder="31999991234" />
+          <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+            <button onClick={genFree} disabled={freePhone.replace(/\D/g,'').length<10 || status.free==='loading'} style={{
+              background:`${C.green}18`, border:`1.5px solid ${C.green}35`, color:C.green,
+              borderRadius:10, padding:'10px 24px', cursor:'pointer', fontSize:13, fontWeight:700,
+              opacity: freePhone.replace(/\D/g,'').length<10 ? 0.5 : 1, transition:'all 0.15s',
+            }}
+              onMouseEnter={e=>{ if (freePhone.replace(/\D/g,'').length>=10) e.currentTarget.style.background=`${C.green}30` }}
+              onMouseLeave={e=>e.currentTarget.style.background=`${C.green}18`}
+            >
+              {status.free==='loading' ? 'Gerando…' : 'Gerar link gratuito'}
+            </button>
+            {status.free==='error' && <span style={{ color:C.red, fontSize:12 }}>Erro ao criar. Verifique o Supabase.</span>}
+          </div>
+          {freeLink && (
+            <div style={{ background:`${C.green}0e`, border:`1px solid ${C.green}28`, borderRadius:12, padding:'18px 20px', display:'flex', flexDirection:'column', gap:12 }}>
+              <p style={{ margin:0, fontSize:12, fontWeight:700, color:C.green }}>✓ Link gerado com sucesso!</p>
+              <p style={{ margin:0, fontSize:13, color:C.greenL, fontFamily:'monospace', wordBreak:'break-all' }}>{freeLink}</p>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={()=>navigator.clipboard.writeText(freeLink)}
+                  style={{ background:`${C.green}18`, border:`1px solid ${C.green}35`, color:C.green, borderRadius:8, padding:'7px 16px', cursor:'pointer', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:6 }}>
+                  <Copy size={12} /> Copiar
+                </button>
+                <a href={freeLink} target="_blank" rel="noopener noreferrer"
+                  style={{ background:`${C.purple}18`, border:`1px solid ${C.purple}35`, color:C.purpleL, borderRadius:8, padding:'7px 16px', fontSize:12, fontWeight:700, textDecoration:'none', display:'flex', alignItems:'center', gap:6 }}>
+                  <ExternalLink size={12} /> Abrir
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -636,11 +1021,7 @@ export default function AdminPanel() {
   const load = async () => {
     setLoading(true); setError(null)
     try {
-      const [s, fe, p] = await Promise.all([
-        getAllSites(),
-        getFunnelEvents(from, to),
-        getAppConfig('price'),
-      ])
+      const [s, fe, p] = await Promise.all([getAllSites(), getFunnelEvents(from, to), getAppConfig('price')])
       setSites(s)
       setFunnelEvents(fe)
       if (p) setPrice(parseFloat(p))
@@ -654,17 +1035,18 @@ export default function AdminPanel() {
 
   const totalPaid = sites.filter(s=>s.paid).length
   const pageTitle = { dashboard:'Dashboard', clients:'Clientes', settings:'Configurações' }[nav]
+  const pageSub   = { dashboard:'Visão geral do negócio', clients:'Gerenciar clientes', settings:'Configurar o sistema' }[nav]
 
   const rootStyle = {
     position:'fixed', inset:0, overflowY:'auto',
     background:C.bg, color:C.text,
-    fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    fontFamily:'-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif',
   }
 
   if (loading) return (
     <div style={{ ...rootStyle, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ textAlign:'center' }}>
-        <div style={{ width:40, height:40, border:`3px solid ${C.border}`, borderTop:`3px solid ${C.purple}`, borderRadius:'50%', margin:'0 auto 16px', animation:'spin 1s linear infinite' }} />
+        <div style={{ width:44, height:44, border:`3px solid ${C.border}`, borderTop:`3px solid ${C.purple}`, borderRadius:'50%', margin:'0 auto 18px', animation:'spin 0.8s linear infinite' }} />
         <p style={{ margin:0, fontSize:14, color:C.muted }}>Carregando painel…</p>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
@@ -673,10 +1055,11 @@ export default function AdminPanel() {
 
   if (error) return (
     <div style={{ ...rootStyle, display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ background:C.surface, borderRadius:20, padding:40, maxWidth:500, textAlign:'center', border:`1px solid ${C.red}30` }}>
+      <div style={{ background:C.card, borderRadius:20, padding:48, maxWidth:500, textAlign:'center', border:`1px solid ${C.red}25` }}>
+        <div style={{ fontSize:36, marginBottom:16 }}>⚠️</div>
         <p style={{ color:C.red, fontWeight:800, fontSize:18, marginBottom:12 }}>Banco de dados não configurado</p>
-        <p style={{ color:C.soft, fontSize:13, lineHeight:1.8, marginBottom:20 }}>Acesse <strong style={{color:C.purpleL}}>Vercel → Settings → Environment Variables</strong> e adicione:</p>
-        <div style={{ background:C.bg, borderRadius:10, padding:'14px 20px', display:'inline-block', fontFamily:'monospace', fontSize:13, color:'#86efac', lineHeight:2.2, textAlign:'left' }}>
+        <p style={{ color:C.soft, fontSize:13, lineHeight:1.8, marginBottom:24 }}>Acesse <strong style={{color:C.purpleL}}>Vercel → Settings → Environment Variables</strong> e adicione:</p>
+        <div style={{ background:C.bg, borderRadius:12, padding:'16px 22px', display:'inline-block', fontFamily:'monospace', fontSize:13, color:'#86efac', lineHeight:2.4, textAlign:'left', border:`1px solid ${C.border}` }}>
           VITE_SUPABASE_URL = https://xxxx.supabase.co<br />
           VITE_SUPABASE_ANON_KEY = eyJhbGciOi...
         </div>
@@ -686,23 +1069,23 @@ export default function AdminPanel() {
 
   return (
     <div style={rootStyle}>
-      <Sidebar active={nav} setActive={setNav} onLogout={handleLogout} />
+      <Sidebar active={nav} setActive={setNav} onLogout={handleLogout} totalSites={sites.length} totalPaid={totalPaid} />
 
-      {/* main */}
       <div style={{ marginLeft: SIDEBAR, minHeight:'100vh', display:'flex', flexDirection:'column' }}>
-        {/* topbar */}
-        <header style={{ background:C.side, borderBottom:`1px solid ${C.border}`, padding:'0 32px', height:62, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
+        <header style={{ background:C.side, borderBottom:`1px solid ${C.border}`, padding:'0 32px', height:64, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
           <div>
-            <p style={{ margin:0, fontSize:18, fontWeight:900, color:C.text }}>{pageTitle}</p>
-            <p style={{ margin:0, fontSize:11, color:C.muted }}>{sites.length} cliente{sites.length!==1?'s':''} · {totalPaid} pago{totalPaid!==1?'s':''} · {brl(totalPaid*price)} arrecadados</p>
+            <p style={{ margin:0, fontSize:19, fontWeight:900, color:C.text, letterSpacing:-0.5 }}>{pageTitle}</p>
+            <p style={{ margin:0, fontSize:11, color:C.muted, marginTop:1 }}>{pageSub}</p>
           </div>
-          <button onClick={load} style={{ background:'transparent', border:`1px solid ${C.border}`, color:C.muted, borderRadius:8, padding:'7px 16px', cursor:'pointer', fontSize:13, fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
+          <button onClick={load} style={{ background:'transparent', border:`1px solid ${C.border}`, color:C.soft, borderRadius:10, padding:'8px 18px', cursor:'pointer', fontSize:13, fontWeight:600, display:'flex', alignItems:'center', gap:7, transition:'all 0.15s' }}
+            onMouseEnter={e=>{ e.currentTarget.style.borderColor=C.borderHi; e.currentTarget.style.color=C.text }}
+            onMouseLeave={e=>{ e.currentTarget.style.borderColor=C.border; e.currentTarget.style.color=C.soft }}
+          >
             <RefreshCw size={14} /> Atualizar
           </button>
         </header>
 
-        {/* content */}
-        <main style={{ flex:1, padding:'28px 32px', maxWidth:1400, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
+        <main style={{ flex:1, padding:'28px 32px', maxWidth:1440, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
           {nav === 'dashboard' && (
             <DashboardView sites={sites} price={price} period={period} setPeriod={setPeriod}
               customFrom={customFrom} setCustomFrom={setCustomFrom} customTo={customTo} setCustomTo={setCustomTo}
@@ -723,7 +1106,9 @@ export default function AdminPanel() {
         * { box-sizing: border-box }
         ::-webkit-scrollbar { width: 6px; height: 6px }
         ::-webkit-scrollbar-track { background: transparent }
-        ::-webkit-scrollbar-thumb { background: #2a2a3d; border-radius: 3px }
+        ::-webkit-scrollbar-thumb { background: #252538; border-radius: 3px }
+        ::-webkit-scrollbar-thumb:hover { background: #313148 }
+        input:focus { border-color: ${C.purple} !important; box-shadow: 0 0 0 3px ${C.purple}15 }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5) }
       `}</style>
     </div>
