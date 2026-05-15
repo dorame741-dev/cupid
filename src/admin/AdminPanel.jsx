@@ -625,7 +625,7 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
     return `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`
   }
 
-  const COLS = '44px 155px 175px minmax(100px,1fr) 95px 200px'
+  const COLS = '44px 155px 175px minmax(80px,1fr) 90px auto'
   const thStyle = { padding:'10px 14px', fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.9, whiteSpace:'nowrap' }
 
   return (
@@ -657,7 +657,7 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
       {/* table — scrollable so buttons never get cut */}
       <div style={{ background:C.card, borderRadius:18, border:`1px solid ${C.border}` }}>
         <div style={{ overflowX:'auto', borderRadius:18 }}>
-          <div style={{ minWidth:820 }}>
+          <div style={{ minWidth:980 }}>
             {/* header */}
             <div style={{ display:'grid', gridTemplateColumns:COLS, background:C.bg, borderRadius:'18px 18px 0 0', borderBottom:`1px solid ${C.border}` }}>
               {['', 'Telefone', 'Casal', 'Título', 'Status', 'Ações'].map(h=>(
@@ -716,7 +716,7 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
                     </span>
                   </div>
                   {/* actions */}
-                  <div style={{ padding:'8px 12px', display:'flex', alignItems:'center', gap:5 }}>
+                  <div style={{ padding:'8px 16px 8px 8px', display:'flex', alignItems:'center', gap:5 }}>
                     {/* WhatsApp */}
                     <a href={waLink(site.phone, access, edit)} target="_blank" rel="noopener noreferrer" title="Enviar no WhatsApp"
                       style={{ display:'flex', alignItems:'center', gap:4, background:`${C.wa}15`, border:`1px solid ${C.wa}28`, color:C.wa, borderRadius:8, padding:'5px 9px', textDecoration:'none', fontSize:11, fontWeight:700, whiteSpace:'nowrap', transition:'all 0.15s', flexShrink:0 }}
