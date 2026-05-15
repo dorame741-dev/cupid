@@ -11,6 +11,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api\/pushinpay/, ''),
       },
+      '/api/innertube': {
+        target: 'https://www.youtube.com',
+        changeOrigin: true,
+        rewrite: () => '/youtubei/v1/search?prettyPrint=false',
+      },
     },
   },
 })

@@ -1,18 +1,66 @@
-const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
+const INNERTUBE_CONTEXT = {
+  client: {
+    clientName: 'WEB',
+    clientVersion: '2.20240101.00.00',
+    hl: 'pt',
+    gl: 'BR',
+  },
+}
+
+const cache = new Map()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
 
 export async function searchMusic(query) {
   if (!query.trim()) return []
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=8`
-  const res = await fetch(url)
+
+  const key = query.trim().toLowerCase()
+  const cached = cache.get(key)
+  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data
+
+  const res = await fetch('/api/innertube', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query,
+      params: 'EgIQAQ%3D%3D', // filtro: apenas músicas
+      context: INNERTUBE_CONTEXT,
+    }),
+  })
+
   if (!res.ok) throw new Error('Erro na busca')
   const data = await res.json()
-  return data.items.map(item => ({
-    id: item.id.videoId,
-    title: item.snippet.title,
-    channel: item.snippet.channelTitle,
-    thumbnail: `https://img.youtube.com/vi/${item.id.videoId}/hqdefault.jpg`,
-    url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-  }))
+  const results = parseResults(data)
+
+  cache.set(key, { data: results, ts: Date.now() })
+  return results
+}
+
+function parseResults(data) {
+  const contents =
+    data?.contents
+      ?.twoColumnSearchResultsRenderer
+      ?.primaryContents
+      ?.sectionListRenderer
+      ?.contents?.[0]
+      ?.itemSectionRenderer
+      ?.contents
+
+  if (!contents) return []
+
+  return contents
+    .filter(item => item.videoRenderer)
+    .slice(0, 8)
+    .map(item => {
+      const v = item.videoRenderer
+      const id = v.videoId
+      return {
+        id,
+        title: v.title?.runs?.[0]?.text ?? 'Sem título',
+        channel: v.ownerText?.runs?.[0]?.text ?? 'Desconhecido',
+        thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+        url: `https://www.youtube.com/watch?v=${id}`,
+      }
+    })
 }
 
 // Carrega a YouTube IFrame API uma única vez
@@ -31,22 +79,7 @@ export function loadYTAPI() {
 
 // Músicas românticas padrão (usadas quando nenhuma é selecionada)
 export const DEFAULT_SONGS = [
-  {
-    id: '450p7goxZqg',
-    title: 'All of Me',
-    channel: 'John Legend',
-    thumbnail: 'https://img.youtube.com/vi/450p7goxZqg/hqdefault.jpg',
-  },
-  {
-    id: 'rtOvBOTyX00',
-    title: 'A Thousand Years',
-    channel: 'Christina Perri',
-    thumbnail: 'https://img.youtube.com/vi/rtOvBOTyX00/hqdefault.jpg',
-  },
-  {
-    id: '2Vv-BfVoq4g',
-    title: 'Perfect',
-    channel: 'Ed Sheeran',
-    thumbnail: 'https://img.youtube.com/vi/2Vv-BfVoq4g/hqdefault.jpg',
-  },
+  { id: '450p7goxZqg', title: 'All of Me', channel: 'John Legend',     thumbnail: 'https://img.youtube.com/vi/450p7goxZqg/hqdefault.jpg' },
+  { id: 'rtOvBOTyX00', title: 'A Thousand Years', channel: 'Christina Perri', thumbnail: 'https://img.youtube.com/vi/rtOvBOTyX00/hqdefault.jpg' },
+  { id: '2Vv-BfVoq4g', title: 'Perfect', channel: 'Ed Sheeran',        thumbnail: 'https://img.youtube.com/vi/2Vv-BfVoq4g/hqdefault.jpg' },
 ]
