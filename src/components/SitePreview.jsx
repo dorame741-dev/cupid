@@ -326,7 +326,7 @@ const CONQUEST_HEARTS = [
 
 function GameMockup({ id, accent }) {
   if (id === 'roulette') return (
-    <svg width="34" height="34" viewBox="0 0 44 44">
+    <svg width="28" height="28" viewBox="0 0 44 44">
       {[0,1,2,3,4,5].map(i => {
         const a  = (i/6)*Math.PI*2 - Math.PI/2
         const a2 = ((i+1)/6)*Math.PI*2 - Math.PI/2
@@ -340,7 +340,7 @@ function GameMockup({ id, accent }) {
     </svg>
   )
   if (id === 'words') return (
-    <svg width="34" height="34" viewBox="0 0 44 44">
+    <svg width="28" height="28" viewBox="0 0 44 44">
       {[0,1,2].map(row => [0,1,2,3,4].map(col => (
         <rect key={`${row}-${col}`} x={col*8+2} y={row*11+5} width="7" height="9" rx="1.5"
           fill={(row===0&&col===2)||(row===1&&col===0)||(row===2&&col===4) ? accent+'90' : accent+'22'}
@@ -349,7 +349,7 @@ function GameMockup({ id, accent }) {
     </svg>
   )
   if (id === 'gallery') return (
-    <svg width="34" height="34" viewBox="0 0 44 44">
+    <svg width="28" height="28" viewBox="0 0 44 44">
       <rect x="2"  y="2"  width="18" height="18" rx="3" fill={accent+'40'} stroke={accent+'55'} strokeWidth="1"/>
       <rect x="24" y="2"  width="18" height="18" rx="3" fill={accent+'22'} stroke={accent+'35'} strokeWidth="1"/>
       <rect x="2"  y="24" width="18" height="18" rx="3" fill={accent+'22'} stroke={accent+'35'} strokeWidth="1"/>
@@ -357,7 +357,7 @@ function GameMockup({ id, accent }) {
     </svg>
   )
   if (id === 'map') return (
-    <svg width="34" height="34" viewBox="0 0 44 44">
+    <svg width="28" height="28" viewBox="0 0 44 44">
       <path d="M 8 36 Q 14 22 22 18 Q 31 14 36 8" stroke={accent+'60'} strokeWidth="1.8" fill="none" strokeDasharray="3 2.5"/>
       <circle cx="8"  cy="36" r="3.5" fill={accent}/>
       <circle cx="22" cy="18" r="2.5" fill={accent+'90'}/>
@@ -365,7 +365,7 @@ function GameMockup({ id, accent }) {
     </svg>
   )
   if (id === 'timeline') return (
-    <svg width="34" height="34" viewBox="0 0 44 44">
+    <svg width="28" height="28" viewBox="0 0 44 44">
       <line x1="22" y1="4" x2="22" y2="40" stroke={accent+'40'} strokeWidth="2"/>
       {[8,18,28,38].map((y,i) => (
         <g key={y}>
@@ -376,7 +376,7 @@ function GameMockup({ id, accent }) {
     </svg>
   )
   if (id === 'stars') return (
-    <svg width="34" height="34" viewBox="0 0 44 44">
+    <svg width="28" height="28" viewBox="0 0 44 44">
       {[[10,10],[34,8],[20,22],[8,32],[38,30],[24,38]].map(([x,y],i) => (
         <circle key={i} cx={x} cy={y} r={i%2===0 ? 2.5 : 1.5} fill={accent} opacity={i%2===0 ? 0.9 : 0.5}/>
       ))}
@@ -658,7 +658,7 @@ function ConquistasSection({ data }) {
           <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(available.length, 3)}, 1fr)`, gap:8 }}>
             {available.map(g => (
               <button key={g.id} onClick={() => setOpenGame(g.id)}
-                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'14px 8px', borderRadius:16, background:g.bg, border:`1px solid ${g.accent}35`, cursor:'pointer' }}>
+                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'10px 6px', borderRadius:14, background:g.bg, border:`1px solid ${g.accent}35`, cursor:'pointer' }}>
                 <GameMockup id={g.id} accent={g.accent} />
                 <span style={{ fontSize:10, fontWeight:700, color:g.accent }}>{g.label}</span>
               </button>
