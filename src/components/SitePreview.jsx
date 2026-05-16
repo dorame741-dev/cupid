@@ -306,13 +306,87 @@ function MessageCard({ message, audio, onOpen }) {
 
 /* ─── Games hub (Conquistas) ────────────────────────────────── */
 const GAME_DEFS = [
-  { id: 'roulette', icon: '🎡', label: 'Roleta',   bg: '#7f1d1d', accent: '#fca5a5' },
-  { id: 'words',    icon: '🔤', label: 'Palavras',  bg: '#2e1065', accent: '#c4b5fd' },
-  { id: 'gallery',  icon: '📸', label: 'Galeria',   bg: '#451a03', accent: '#fcd34d' },
-  { id: 'map',      icon: '🗺️',  label: 'Mapa',     bg: '#082f49', accent: '#7dd3fc' },
-  { id: 'timeline', icon: '📅', label: 'Jornada',   bg: '#052e16', accent: '#6ee7b7' },
-  { id: 'stars',    icon: '⭐', label: 'Estrelas',  bg: '#1e1b4b', accent: '#a5b4fc' },
+  { id: 'roulette', label: 'Roleta',   bg: '#7f1d1d', accent: '#fca5a5' },
+  { id: 'words',    label: 'Palavras', bg: '#2e1065', accent: '#c4b5fd' },
+  { id: 'gallery',  label: 'Galeria',  bg: '#451a03', accent: '#fcd34d' },
+  { id: 'map',      label: 'Mapa',     bg: '#082f49', accent: '#7dd3fc' },
+  { id: 'timeline', label: 'Jornada',  bg: '#052e16', accent: '#6ee7b7' },
+  { id: 'stars',    label: 'Estrelas', bg: '#1e1b4b', accent: '#a5b4fc' },
 ]
+
+const BG_CONQUEST = 'radial-gradient(ellipse at 25% 75%, rgba(109,40,217,0.45) 0%, transparent 55%), radial-gradient(ellipse at 78% 20%, rgba(139,92,246,0.35) 0%, transparent 50%), #0d0720'
+
+const CONQUEST_HEARTS = [
+  { left: '8%',  size: 13, dur: 10, delay: -2  },
+  { left: '25%', size:  9, dur: 14, delay: -6  },
+  { left: '45%', size: 17, dur:  8, delay: -4  },
+  { left: '65%', size: 11, dur: 12, delay: -1  },
+  { left: '82%', size: 15, dur:  9, delay: -7  },
+]
+
+function GameMockup({ id, accent }) {
+  if (id === 'roulette') return (
+    <svg width="44" height="44" viewBox="0 0 44 44">
+      {[0,1,2,3,4,5].map(i => {
+        const a  = (i/6)*Math.PI*2 - Math.PI/2
+        const a2 = ((i+1)/6)*Math.PI*2 - Math.PI/2
+        const x1 = 22+20*Math.cos(a),  y1 = 22+20*Math.sin(a)
+        const x2 = 22+20*Math.cos(a2), y2 = 22+20*Math.sin(a2)
+        return <path key={i} d={`M 22 22 L ${x1} ${y1} A 20 20 0 0 1 ${x2} ${y2} Z`}
+          fill={i%2===0 ? accent+'50' : accent+'22'} stroke={accent+'40'} strokeWidth="0.8"/>
+      })}
+      <circle cx="22" cy="22" r="6" fill={accent} opacity="0.9"/>
+      <text x="22" y="26" textAnchor="middle" fontSize="8" fill="#fff" fontWeight="bold">♥</text>
+    </svg>
+  )
+  if (id === 'words') return (
+    <svg width="44" height="44" viewBox="0 0 44 44">
+      {[0,1,2].map(row => [0,1,2,3,4].map(col => (
+        <rect key={`${row}-${col}`} x={col*8+2} y={row*11+5} width="7" height="9" rx="1.5"
+          fill={(row===0&&col===2)||(row===1&&col===0)||(row===2&&col===4) ? accent+'90' : accent+'22'}
+          stroke={accent+'45'} strokeWidth="0.6"/>
+      )))}
+    </svg>
+  )
+  if (id === 'gallery') return (
+    <svg width="44" height="44" viewBox="0 0 44 44">
+      <rect x="2"  y="2"  width="18" height="18" rx="3" fill={accent+'40'} stroke={accent+'55'} strokeWidth="1"/>
+      <rect x="24" y="2"  width="18" height="18" rx="3" fill={accent+'22'} stroke={accent+'35'} strokeWidth="1"/>
+      <rect x="2"  y="24" width="18" height="18" rx="3" fill={accent+'22'} stroke={accent+'35'} strokeWidth="1"/>
+      <rect x="24" y="24" width="18" height="18" rx="3" fill={accent+'40'} stroke={accent+'55'} strokeWidth="1"/>
+    </svg>
+  )
+  if (id === 'map') return (
+    <svg width="44" height="44" viewBox="0 0 44 44">
+      <path d="M 8 36 Q 14 22 22 18 Q 31 14 36 8" stroke={accent+'60'} strokeWidth="1.8" fill="none" strokeDasharray="3 2.5"/>
+      <circle cx="8"  cy="36" r="3.5" fill={accent}/>
+      <circle cx="22" cy="18" r="2.5" fill={accent+'90'}/>
+      <circle cx="36" cy="8"  r="3.5" fill={accent}/>
+    </svg>
+  )
+  if (id === 'timeline') return (
+    <svg width="44" height="44" viewBox="0 0 44 44">
+      <line x1="22" y1="4" x2="22" y2="40" stroke={accent+'40'} strokeWidth="2"/>
+      {[8,18,28,38].map((y,i) => (
+        <g key={y}>
+          <circle cx="22" cy={y} r="3.5" fill={i%2===0 ? accent : 'transparent'} stroke={accent} strokeWidth="1.5"/>
+          <rect x={i%2===0 ? 29 : 5} y={y-5} width="11" height="10" rx="2" fill={accent+'22'} stroke={accent+'35'} strokeWidth="0.6"/>
+        </g>
+      ))}
+    </svg>
+  )
+  if (id === 'stars') return (
+    <svg width="44" height="44" viewBox="0 0 44 44">
+      {[[10,10],[34,8],[20,22],[8,32],[38,30],[24,38]].map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r={i%2===0 ? 2.5 : 1.5} fill={accent} opacity={i%2===0 ? 0.9 : 0.5}/>
+      ))}
+      <line x1="10" y1="10" x2="34"  y2="8"  stroke={accent+'35'} strokeWidth="0.8"/>
+      <line x1="34" y1="8"  x2="20"  y2="22" stroke={accent+'35'} strokeWidth="0.8"/>
+      <line x1="20" y1="22" x2="38"  y2="30" stroke={accent+'35'} strokeWidth="0.8"/>
+    </svg>
+  )
+  return null
+}
 
 const ROLETA_COLORS = { rosa: ['#d4547a','#f0a8c0'], azul: ['#3b6fd4','#7ab2f0'] }
 
@@ -538,37 +612,51 @@ function ConquistasSection({ data }) {
   const [openGame, setOpenGame] = useState(null)
 
   if (!available.length) return (
-    <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3"
-      style={{ background:'rgba(10,2,8,0.5)', border:'1px solid rgba(190,18,60,0.2)' }}>
-      <p className="text-white text-[14px] font-bold mb-2">Conquistas</p>
-      <p style={{ color:'rgba(190,18,60,0.5)', fontSize:12 }}>Nenhum jogo adicionado</p>
+    <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3 relative overflow-hidden"
+      style={{ background: BG_CONQUEST, border:'1px solid rgba(139,92,246,0.25)' }}>
+      <p className="text-white text-[14px] font-bold mb-2 relative z-10">Conquistas</p>
+      <p style={{ color:'rgba(139,92,246,0.5)', fontSize:12, position:'relative', zIndex:1 }}>Nenhum jogo adicionado</p>
     </div>
   )
 
   return (
     <>
       {openGame && <GameModal gameId={openGame} data={data} onClose={() => setOpenGame(null)} />}
-      <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3"
-        style={{ background:'rgba(10,2,8,0.5)', border:'1px solid rgba(190,18,60,0.2)' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-          <div>
-            <p style={{ color:'white', fontSize:14, fontWeight:700, margin:0 }}>Conquistas</p>
-            <p style={{ color:'rgba(190,18,60,0.6)', fontSize:11, marginTop:2 }}>{available.length} de {GAME_DEFS.length} desbloqueadas</p>
-          </div>
-          <button onClick={() => setOpenGame(available[Math.floor(Math.random() * available.length)].id)}
-            style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(190,18,60,0.25)', border:'1px solid rgba(190,18,60,0.3)', borderRadius:20, padding:'6px 12px', cursor:'pointer' }}>
-            <span style={{ fontSize:11, fontWeight:700, color:'#fca5a5' }}>SORTEAR</span>
-            <span style={{ fontSize:14 }}>🎲</span>
-          </button>
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(available.length, 3)}, 1fr)`, gap:8 }}>
-          {available.map(g => (
-            <button key={g.id} onClick={() => setOpenGame(g.id)}
-              style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'16px 8px', borderRadius:16, background:g.bg, border:`1px solid ${g.accent}30`, cursor:'pointer' }}>
-              <span style={{ fontSize:28 }}>{g.icon}</span>
-              <span style={{ fontSize:10, fontWeight:700, color:g.accent }}>{g.label}</span>
-            </button>
+      <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3 relative overflow-hidden"
+        style={{ background: BG_CONQUEST, border:'1px solid rgba(139,92,246,0.25)' }}>
+
+        {/* corações subindo */}
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex:1 }}>
+          {CONQUEST_HEARTS.map((h,i) => (
+            <span key={i} className="heart-rise" style={{
+              left: h.left, fontSize: h.size,
+              animationDuration:`${h.dur}s`, animationDelay:`${h.delay}s`,
+              color: i%2===0 ? 'rgba(167,139,250,0.55)' : 'rgba(192,132,252,0.45)',
+            }}>♥</span>
           ))}
+        </div>
+
+        <div style={{ position:'relative', zIndex:2 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <div>
+              <p style={{ color:'white', fontSize:14, fontWeight:700, margin:0 }}>Conquistas</p>
+              <p style={{ color:'rgba(167,139,250,0.7)', fontSize:11, marginTop:2 }}>{available.length} de {GAME_DEFS.length} desbloqueadas</p>
+            </div>
+            <button onClick={() => setOpenGame(available[Math.floor(Math.random() * available.length)].id)}
+              style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(139,92,246,0.2)', border:'1px solid rgba(139,92,246,0.35)', borderRadius:20, padding:'6px 12px', cursor:'pointer' }}>
+              <span style={{ fontSize:11, fontWeight:700, color:'#c4b5fd' }}>SORTEAR</span>
+              <span style={{ fontSize:14 }}>🎲</span>
+            </button>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(available.length, 3)}, 1fr)`, gap:8 }}>
+            {available.map(g => (
+              <button key={g.id} onClick={() => setOpenGame(g.id)}
+                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'14px 8px', borderRadius:16, background:g.bg, border:`1px solid ${g.accent}35`, cursor:'pointer' }}>
+                <GameMockup id={g.id} accent={g.accent} />
+                <span style={{ fontSize:10, fontWeight:700, color:g.accent }}>{g.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </>
