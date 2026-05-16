@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useQuiz } from '../context/QuizContext'
 
 const SCREENSHOTS = [
   { src: '/screenshots/roleta.png',   label: 'Roleta do Casal' },
@@ -17,8 +18,11 @@ const faqs = [
   { q: 'Funciona em qualquer celular?', a: 'Sim! Nossa tecnologia cria uma experiência fluida que funciona perfeitamente em qualquer celular, tablet ou computador.' },
 ]
 
+const SKY = '#0ea5e9'
+const PRP = '#7C3AED'
+
 /* ─── Coverflow de fotos redondas ───────────────────────────── */
-function CoverflowCarousel() {
+function CoverflowCarousel({ P }) {
   const [idx, setIdx] = useState(0)
   const n = SCREENSHOTS.length
   const prev = SCREENSHOTS[(idx - 1 + n) % n]
@@ -70,7 +74,7 @@ function CoverflowCarousel() {
           top: 0,
           zIndex: 3,
           border: '4px solid white',
-          boxShadow: '0 16px 48px rgba(124,58,237,0.38)',
+          boxShadow: `0 16px 48px ${P === SKY ? 'rgba(14,165,233,0.38)' : 'rgba(124,58,237,0.38)'}`,
         }}>
           <img src={curr.src} alt={curr.label}
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
@@ -95,7 +99,7 @@ function CoverflowCarousel() {
       </div>
 
       {/* label da foto central */}
-      <p style={{ fontSize: 13, fontWeight: 800, color: '#7C3AED', letterSpacing: 0.3, marginTop: -4 }}>{curr.label}</p>
+      <p style={{ fontSize: 13, fontWeight: 800, color: P, letterSpacing: 0.3, marginTop: -4 }}>{curr.label}</p>
 
       {/* dots */}
       <div style={{ display: 'flex', gap: 5 }}>
@@ -103,7 +107,7 @@ function CoverflowCarousel() {
           <button key={i} onClick={() => goTo(i)} style={{
             width: i === idx ? 20 : 6, height: 6, borderRadius: 3,
             border: 'none', cursor: 'pointer', padding: 0,
-            background: i === idx ? '#7C3AED' : '#E5E7EB',
+            background: i === idx ? P : '#E5E7EB',
             transition: 'width 0.3s ease, background 0.3s ease',
           }} />
         ))}
@@ -113,7 +117,7 @@ function CoverflowCarousel() {
 }
 
 /* ─── Phone mockup ──────────────────────────────────────────── */
-function PhoneMockup({ src, label }) {
+function PhoneMockup({ src, label, P }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0, width: 138 }}>
       <div style={{
@@ -131,12 +135,12 @@ function PhoneMockup({ src, label }) {
         <div style={{ position: 'absolute', left: -3, top: 56, width: 3, height: 18, background: '#222', borderRadius: '2px 0 0 2px' }} />
         <div style={{ position: 'absolute', left: -3, top: 80, width: 3, height: 18, background: '#222', borderRadius: '2px 0 0 2px' }} />
       </div>
-      <span style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', textAlign: 'center' }}>{label}</span>
+      <span style={{ fontSize: 10, fontWeight: 700, color: P, textAlign: 'center' }}>{label}</span>
     </div>
   )
 }
 
-function PhoneCarousel() {
+function PhoneCarousel({ P }) {
   const [idx, setIdx] = useState(0)
 
   useEffect(() => {
@@ -148,13 +152,13 @@ function PhoneCarousel() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-      <PhoneMockup src={s.src} label={s.label} />
+      <PhoneMockup src={s.src} label={s.label} P={P} />
       <div style={{ display: 'flex', gap: 5 }}>
         {SCREENSHOTS.map((_, i) => (
           <button key={i} onClick={() => setIdx(i)} style={{
             width: i === idx ? 18 : 6, height: 6, borderRadius: 3,
             border: 'none', cursor: 'pointer', padding: 0,
-            background: i === idx ? '#7C3AED' : '#E5E7EB',
+            background: i === idx ? P : '#E5E7EB',
             transition: 'width 0.3s ease, background 0.3s ease',
           }} />
         ))}
@@ -166,17 +170,24 @@ function PhoneCarousel() {
 /* ─── Main ──────────────────────────────────────────────────── */
 export default function StepUpsell({ onAccept, onDecline }) {
   const [openFaq, setOpenFaq] = useState(null)
+  const { data } = useQuiz()
+  const isBiblico = data.variant === 'biblico'
+  const P = isBiblico ? SKY : PRP
+  const pillBg   = isBiblico ? 'rgba(14,165,233,0.18)' : 'rgba(124,58,237,0.18)'
+  const pillText = isBiblico ? '#bae6fd' : '#c4b5fd'
+  const btnGrad  = isBiblico ? 'linear-gradient(135deg, #0ea5e9, #38bdf8)' : 'linear-gradient(135deg, #7c3aed, #9333ea)'
+  const btnShadow = isBiblico ? '0 8px 28px rgba(14,165,233,0.45)' : '0 8px 28px rgba(124,58,237,0.45)'
 
   return (
     <div className="step-root">
       <div className="step-scroll flex flex-col items-center gap-0">
 
         {/* barra de progresso */}
-        <div className="w-full h-1.5 bg-purple-600 rounded-full mt-2 mb-4" />
+        <div className="w-full h-1.5 rounded-full mt-2 mb-4" style={{ background: P }} />
 
-        {/* cupido */}
+        {/* mascote */}
         <div style={{ marginTop: -20, marginBottom: -30 }}>
-          <img src="/cupido.png" alt="" style={{ width: 220, height: 220, objectFit: 'contain' }} />
+          <img src={isBiblico ? '/anjinho.png' : '/cupido.png'} alt="" style={{ width: 220, height: 220, objectFit: 'contain' }} />
         </div>
 
         {/* headline */}
@@ -186,10 +197,10 @@ export default function StepUpsell({ onAccept, onDecline }) {
           </p>
           <p className="text-[14px] text-gray-500 mt-1.5 leading-relaxed">
             Mas você pode deixar{' '}
-            <span className="font-black text-purple-600">INESQUECÍVEL</span>{' '}
+            <span className="font-black" style={{ color: P }}>INESQUECÍVEL</span>{' '}
             com a{' '}
             <span className="font-bold text-gray-900">Retrospectiva Wrapped</span>.
-            São <span className="text-purple-600 font-bold">8+ seções animadas</span>{' '}
+            São <span className="font-bold" style={{ color: P }}>8+ seções animadas</span>{' '}
             que contam a história de vocês como um filme —{' '}
             <span className="font-bold text-gray-900">9 em cada 10 pessoas choram ao ver!</span>
           </p>
@@ -198,17 +209,17 @@ export default function StepUpsell({ onAccept, onDecline }) {
         {/* mockup de celular */}
         <div className="w-full bg-gray-950 rounded-3xl py-6 px-4 flex flex-col items-center gap-4 mb-4">
           <div className="text-center">
-            <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-1">Como fica no celular</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: P }}>Como fica no celular</p>
             <p className="text-white text-[16px] font-black leading-tight">Experiência completa</p>
             <p className="text-gray-400 text-[12px] mt-0.5">Interativo · Animado · Emocionante</p>
           </div>
-          <PhoneCarousel />
+          <PhoneCarousel P={P} />
           {/* feature pills */}
           <div className="flex flex-wrap justify-center gap-2 mt-1">
             {SCREENSHOTS.map(s => (
               <span key={s.label} style={{
-                background: 'rgba(124,58,237,0.18)',
-                color: '#c4b5fd',
+                background: pillBg,
+                color: pillText,
                 fontSize: 10,
                 fontWeight: 700,
                 padding: '4px 10px',
@@ -223,7 +234,7 @@ export default function StepUpsell({ onAccept, onDecline }) {
         <div className="w-full flex flex-col gap-3 mb-6">
           <button onClick={onAccept}
             className="btn-pulse w-full text-white rounded-2xl py-4 font-black text-[16px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #9333ea)', boxShadow: '0 8px 28px rgba(124,58,237,0.45)' }}>
+            style={{ background: btnGrad, boxShadow: btnShadow }}>
             Quero adicionar agora ↗
           </button>
           <button onClick={onDecline} className="w-full text-gray-400 text-[13px] py-1 font-medium">
@@ -241,7 +252,7 @@ export default function StepUpsell({ onAccept, onDecline }) {
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full flex items-center justify-between px-4 py-4 text-left">
                   <p className="text-[14px] font-semibold text-gray-800 pr-3">{faq.q}</p>
-                  <span className={`text-purple-500 text-lg shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`}>∨</span>
+                  <span className={`text-lg shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`} style={{ color: P }}>∨</span>
                 </button>
                 {openFaq === i && (
                   <div className="px-4 pb-4 border-t border-gray-50">

@@ -7,9 +7,12 @@ export default function StepIntroNames({ onNext }) {
   const { data, update } = useQuiz()
   const [focused, setFocused] = useState(null)
   const canContinue = data.myName.trim() && data.partnerName.trim()
+  const isBiblico = data.variant === 'biblico'
+  const activeColor = isBiblico ? '#0ea5e9' : '#8B5CF6'
+  const iconActive  = isBiblico ? '#0ea5e9' : '#7C3AED'
 
   const borderColor = (field) =>
-    data[field] || focused === field ? '#8B5CF6' : '#E5E7EB'
+    data[field] || focused === field ? activeColor : '#E5E7EB'
 
   return (
     <div className="step-root" style={{ background: '#fff' }}>
@@ -37,7 +40,7 @@ export default function StepIntroNames({ onNext }) {
             <Gift
               size={22}
               style={{
-                color: data.myName || focused === 'myName' ? '#7C3AED' : '#6B7280',
+                color: data.myName || focused === 'myName' ? iconActive : '#6B7280',
                 transition: 'color 0.2s',
                 flexShrink: 0,
               }}
@@ -61,8 +64,8 @@ export default function StepIntroNames({ onNext }) {
             <Heart
               size={22}
               style={{
-                color: data.partnerName || focused === 'partnerName' ? '#7C3AED' : '#6B7280',
-                fill: data.partnerName || focused === 'partnerName' ? '#7C3AED' : 'none',
+                color: data.partnerName || focused === 'partnerName' ? iconActive : '#6B7280',
+                fill: data.partnerName || focused === 'partnerName' ? iconActive : 'none',
                 transition: 'color 0.2s, fill 0.2s',
                 flexShrink: 0,
               }}
