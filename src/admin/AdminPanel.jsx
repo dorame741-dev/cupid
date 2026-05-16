@@ -786,15 +786,32 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
             style={{ width:'100%', background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:12, padding:'10px 14px 10px 38px', color:C.text, fontSize:13, outline:'none', boxSizing:'border-box' }} />
         </div>
         <div style={{ display:'flex', gap:6 }}>
-          {[['all','Todos'],['paid','Pagos ✅'],['pending','Pendentes ⏳']].map(([f,l])=>(
-            <button key={f} onClick={()=>setFilter(f)} style={{
-              padding:'9px 16px', borderRadius:10, cursor:'pointer', fontSize:12, fontWeight:700, outline:'none',
-              background: filter===f ? `${C.purple}20` : 'transparent',
-              color: filter===f ? C.purpleL : C.muted,
-              border: filter===f ? `1.5px solid ${C.purple}50` : `1.5px solid ${C.border}`,
-              transition:'all 0.15s',
-            }}>{l}</button>
-          ))}
+          {[
+            { f:'all',     label:'Todos',     count: inPeriod.length,               activeColor:'#7c3aed', activeBg:'rgba(124,58,237,0.12)' },
+            { f:'paid',    label:'Pagos',      count: inPeriod.filter(s=>s.paid).length,   activeColor:'#16a34a', activeBg:'rgba(22,163,74,0.12)'  },
+            { f:'pending', label:'Pendentes',  count: inPeriod.filter(s=>!s.paid).length,  activeColor:'#d97706', activeBg:'rgba(217,119,6,0.12)'  },
+          ].map(({ f, label, count, activeColor, activeBg })=>{
+            const active = filter===f
+            return (
+              <button key={f} onClick={()=>setFilter(f)} style={{
+                display:'flex', alignItems:'center', gap:7,
+                padding:'8px 14px', borderRadius:10, cursor:'pointer', fontSize:12, fontWeight:700, outline:'none',
+                background: active ? activeBg : 'transparent',
+                color: active ? activeColor : C.muted,
+                border: active ? `1.5px solid ${activeColor}60` : `1.5px solid ${C.border}`,
+                transition:'all 0.15s',
+              }}>
+                {label}
+                <span style={{
+                  background: active ? activeColor : C.border,
+                  color: active ? '#fff' : C.muted,
+                  borderRadius:20, fontSize:10, fontWeight:800,
+                  padding:'1px 7px', lineHeight:'18px', minWidth:22, textAlign:'center',
+                  transition:'all 0.15s',
+                }}>{count}</span>
+              </button>
+            )
+          })}
         </div>
         <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>{filtered.length} resultado{filtered.length!==1?'s':''}</span>
       </div>
@@ -1184,6 +1201,7 @@ function QuizView() {
     },
   ]
 
+  const card     = { background:C.card, borderRadius:18, border:`1px solid ${C.border}`, padding:28 }
   const rowStyle = { display:'flex', flexDirection:'column', gap:8 }
   const infoBox  = { background:C.bg, borderRadius:10, padding:'10px 14px' }
   const monoUrl  = { margin:'4px 0 0', fontSize:13, fontFamily:'monospace', wordBreak:'break-all' }
