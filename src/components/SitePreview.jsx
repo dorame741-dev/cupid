@@ -606,10 +606,57 @@ function GameModal({ gameId, data, onClose }) {
   return <GenericGameView gameId={gameId} onClose={onClose} />
 }
 
-function ConquistasSection({ data }) {
+function ConquistasSection({ data, autoStart }) {
   const sections  = data.wrappedSections || []
   const available = GAME_DEFS.filter(g => sections.includes(g.id))
-  const [openGame, setOpenGame] = useState(null)
+  const [openGame, setOpenGame]   = useState(null)
+  const [seqIdx, setSeqIdx]       = useState(-1)
+  const [waitNext, setWaitNext]   = useState(false)
+  const prevAutoStart             = useRef(0)
+  const [completed, setCompleted] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('cupid_cq') || '[]')) }
+    catch { return new Set() }
+  })
+
+  useEffect(() => {
+    if (autoStart > prevAutoStart.current && available.length > 0) {
+      prevAutoStart.current = autoStart
+      setSeqIdx(0)
+      setWaitNext(false)
+      setOpenGame(available[0].id)
+    }
+  }, [autoStart])
+
+  const markDone = (id) => {
+    setCompleted(prev => {
+      const next = new Set(prev)
+      next.add(id)
+      try { localStorage.setItem('cupid_cq', JSON.stringify([...next])) } catch {}
+      return next
+    })
+    setOpenGame(null)
+    if (seqIdx >= 0) setWaitNext(true)
+  }
+
+  const goNext = () => {
+    const next = seqIdx + 1
+    if (next < available.length) {
+      setSeqIdx(next)
+      setWaitNext(false)
+      setOpenGame(available[next].id)
+    } else {
+      setSeqIdx(-1)
+      setWaitNext(false)
+    }
+  }
+
+  const openDirect = (id) => {
+    setSeqIdx(-1)
+    setWaitNext(false)
+    setOpenGame(id)
+  }
+
+  const completedCount = available.filter(g => completed.has(g.id)).length
 
   if (!available.length) return (
     <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3 relative overflow-hidden"
@@ -621,7 +668,7 @@ function ConquistasSection({ data }) {
 
   return (
     <>
-      {openGame && <GameModal gameId={openGame} data={data} onClose={() => setOpenGame(null)} />}
+      {openGame && <GameModal gameId={openGame} data={data} onClose={() => markDone(openGame)} />}
       <div className="mx-4 rounded-3xl p-5 shadow-xl mb-3 relative overflow-hidden"
         style={{ background: BG_CONQUEST, border:'1px solid rgba(139,92,246,0.25)' }}>
 
@@ -640,9 +687,11 @@ function ConquistasSection({ data }) {
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
             <div>
               <p style={{ color:'white', fontSize:14, fontWeight:700, margin:0 }}>Conquistas</p>
-              <p style={{ color:'rgba(167,139,250,0.7)', fontSize:11, marginTop:2 }}>{available.length} de {GAME_DEFS.length} desbloqueadas</p>
+              <p style={{ color:'rgba(167,139,250,0.7)', fontSize:11, marginTop:2 }}>
+                {completedCount} de {available.length} desbloqueadas
+              </p>
             </div>
-            <button onClick={() => setOpenGame(available[Math.floor(Math.random() * available.length)].id)}
+            <button onClick={() => openDirect(available[Math.floor(Math.random() * available.length)].id)}
               style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(139,92,246,0.2)', border:'1px solid rgba(139,92,246,0.35)', borderRadius:20, padding:'6px 12px', cursor:'pointer' }}>
               <span style={{ fontSize:11, fontWeight:700, color:'#c4b5fd' }}>SORTEAR</span>
               <svg width="16" height="16" viewBox="0 0 16 16" style={{ flexShrink:0 }}>
@@ -655,15 +704,47 @@ function ConquistasSection({ data }) {
               </svg>
             </button>
           </div>
+
           <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(available.length, 3)}, 1fr)`, gap:8 }}>
-            {available.map(g => (
-              <button key={g.id} onClick={() => setOpenGame(g.id)}
-                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'14px 4px', borderRadius:14, background:g.bg, border:`1px solid ${g.accent}35`, cursor:'pointer' }}>
-                <GameMockup id={g.id} accent={g.accent} />
-                <span style={{ fontSize:10, fontWeight:700, color:g.accent }}>{g.label}</span>
-              </button>
-            ))}
+            {available.map(g => {
+              const done = completed.has(g.id)
+              return (
+                <button key={g.id} onClick={() => openDirect(g.id)}
+                  style={{
+                    display:'flex', flexDirection:'column', alignItems:'center', gap:6,
+                    padding:'14px 4px', borderRadius:14, cursor:'pointer',
+                    background: done ? g.bg : '#111128',
+                    border: done ? `1px solid ${g.accent}40` : '1px solid rgba(255,255,255,0.07)',
+                    filter: done ? 'none' : 'grayscale(1) brightness(0.45)',
+                    transition:'filter 0.5s ease, background 0.5s ease',
+                  }}>
+                  <GameMockup id={g.id} accent={done ? g.accent : '#666'} />
+                  <span style={{ fontSize:10, fontWeight:700, color: done ? g.accent : 'rgba(255,255,255,0.25)' }}>
+                    {g.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
+
+          {waitNext && (
+            <div style={{ marginTop:14, display:'flex', justifyContent:'center' }}>
+              {seqIdx + 1 < available.length ? (
+                <button onClick={goNext} style={{
+                  background:'rgba(139,92,246,0.85)', color:'white', border:'none',
+                  borderRadius:20, padding:'10px 24px', fontSize:13, fontWeight:800,
+                  cursor:'pointer', display:'flex', alignItems:'center', gap:6,
+                  boxShadow:'0 4px 20px rgba(139,92,246,0.4)',
+                }}>
+                  Próxima conquista →
+                </button>
+              ) : (
+                <p style={{ color:'#c4b5fd', fontSize:13, fontWeight:700, textAlign:'center' }}>
+                  ✨ Todas as conquistas desbloqueadas!
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -691,6 +772,7 @@ export default function SitePreview({ onBack, externalData, overlay }) {
   const ctx = useQuiz()
   const data = externalData || ctx?.data || {}
   const [msgOpen, setMsgOpen] = useState(false)
+  const [triggerSeq, setTriggerSeq] = useState(0)
   const ct = data.counterTexts || {}
   const coupleName = ct.coupleName || `${data.myName} e ${data.partnerName}`
   const year = data.relationshipStart ? new Date(data.relationshipStart + 'T00:00').getFullYear() : '2025'
@@ -781,7 +863,7 @@ export default function SitePreview({ onBack, externalData, overlay }) {
         {/* ZONE 3 RED: conquistas + retrospectiva */}
 
         <div style={{ background: BG_RED2 }} className="pb-10">
-          <ConquistasSection data={data} />
+          <ConquistasSection data={data} autoStart={triggerSeq} />
 
           <div className="mx-4 rounded-3xl overflow-hidden shadow-2xl">
             <div className="bg-gradient-to-br from-violet-600 via-pink-500 to-orange-400 p-7 text-center">
@@ -789,7 +871,9 @@ export default function SitePreview({ onBack, externalData, overlay }) {
               <p className="text-white text-[24px] font-black">Sua Retrospectiva</p>
               <p className="text-white/70 text-[13px] mt-1">Explore o seu tempo de casal</p>
               <button className="mt-5 bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold px-8 py-3 rounded-full text-[14px] active:scale-95 transition-all">
-                Vamos lá <svg width="13" height="13" viewBox="0 0 14 14" style={{ display:'inline', verticalAlign:'middle', marginLeft:3 }}><polygon points="7,0.5 8.7,5 13.5,5 9.5,8 11,13 7,10 3,13 4.5,8 0.5,5 5.3,5" fill="white" opacity="0.92"/></svg>
+                <span onClick={() => setTriggerSeq(n => n + 1)} style={{ display:'inline-flex', alignItems:'center', gap:4 }}>
+                  Vamos lá <svg width="13" height="13" viewBox="0 0 14 14" style={{ display:'inline', verticalAlign:'middle' }}><polygon points="7,0.5 8.7,5 13.5,5 9.5,8 11,13 7,10 3,13 4.5,8 0.5,5 5.3,5" fill="white" opacity="0.92"/></svg>
+                </span>
               </button>
             </div>
           </div>
