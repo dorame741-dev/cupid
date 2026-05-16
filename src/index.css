@@ -151,28 +151,29 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   will-change: transform, opacity;
 }
 
-/* ── Tema Bíblico: roxo → azul ──────────────────────────────── */
-@keyframes btn-glow-blue {
-  0%,100% { box-shadow: 0 8px 24px rgba(37,99,235,0.45) }
-  50%      { box-shadow: 0 8px 40px rgba(37,99,235,0.75), 0 0 0 6px rgba(37,99,235,0.12) }
+/* ── Tema Bíblico: roxo → azul céu ─────────────────────────── */
+@keyframes btn-glow-sky {
+  0%,100% { box-shadow: 0 8px 24px rgba(14,165,233,0.45) }
+  50%      { box-shadow: 0 8px 40px rgba(14,165,233,0.75), 0 0 0 6px rgba(14,165,233,0.12) }
 }
-.theme-biblico .btn-pulse { animation: btn-glow-blue 2s ease-in-out infinite !important; }
-.theme-biblico .bg-purple-600 { background-color: #2563eb !important; }
-.theme-biblico .bg-purple-700 { background-color: #1d4ed8 !important; }
-.theme-biblico .text-purple-600 { color: #2563eb !important; }
-.theme-biblico .text-purple-500 { color: #3b82f6 !important; }
-.theme-biblico .border-purple-600 { border-color: #2563eb !important; }
-.theme-biblico .border-purple-400 { border-color: #60a5fa !important; }
-.theme-biblico .ring-purple-500 { --tw-ring-color: #3b82f6 !important; }
-.theme-biblico .shadow-purple-200 { --tw-shadow-color: #bfdbfe !important; }
-.theme-biblico .shadow-purple-300 { --tw-shadow-color: #93c5fd !important; }
-.theme-biblico .bg-purple-100 { background-color: #dbeafe !important; }
-.theme-biblico .text-purple-700 { color: #1d4ed8 !important; }
-.theme-biblico .from-purple-600 { --tw-gradient-from: #2563eb !important; }
-.theme-biblico .via-purple-500  { --tw-gradient-via:  #3b82f6 !important; }
-.theme-biblico .focus\:ring-purple-500:focus { --tw-ring-color: #3b82f6 !important; }
+.theme-biblico .btn-pulse { animation: btn-glow-sky 2s ease-in-out infinite; }
+
+/* Sobrescreve variáveis de cor do Tailwind v4 dentro do tema */
+.theme-biblico {
+  --color-purple-50:  #f0f9ff;
+  --color-purple-100: #e0f2fe;
+  --color-purple-200: #bae6fd;
+  --color-purple-300: #7dd3fc;
+  --color-purple-400: #38bdf8;
+  --color-purple-500: #0ea5e9;
+  --color-purple-600: #38bdf8;
+  --color-purple-700: #0ea5e9;
+  --color-purple-800: #0284c7;
+  --color-purple-900: #0369a1;
+}
+
 @media (min-width:640px) {
   .theme-biblico.phone-shell {
-    box-shadow: 0 32px 80px rgba(37,99,235,0.35), 0 0 0 1px rgba(37,99,235,0.2) !important;
+    box-shadow: 0 32px 80px rgba(14,165,233,0.35), 0 0 0 1px rgba(14,165,233,0.2) !important;
   }
 }
