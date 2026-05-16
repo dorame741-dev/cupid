@@ -4,7 +4,7 @@ import PreviewFab from '../components/PreviewFab'
 import ProgressBar from '../components/ProgressBar'
 import BackButton from '../components/BackButton'
 import { useQuiz } from '../context/QuizContext'
-import { randomTitle } from '../lib/randomTexts'
+import { randomTitle, randomBiblicalTitle } from '../lib/randomTexts'
 import SitePreview from '../components/SitePreview'
 
 const MAX = 30
@@ -27,6 +27,7 @@ export default function Step1Title({ onNext, onBack }) {
         <h1 className="text-[22px] font-black text-gray-900 leading-tight">Título do Presente</h1>
         <p className="text-[14px] text-gray-500 mt-1">
           Escreva o título para marcar esse <span className="text-purple-600">momento especial</span>
+          {data.variant === 'biblico' && <span className="text-purple-600"> — pode escolher um versículo bíblico também</span>}
         </p>
         <p className="text-[12px] text-purple-500 mt-2">
           <Pencil size={12} className="inline text-purple-500 mr-1 mb-0.5" /><strong className="text-purple-600">Você poderá editar depois.</strong>
@@ -36,13 +37,13 @@ export default function Step1Title({ onNext, onBack }) {
           <textarea
             rows={expanded ? 7 : 3}
             maxLength={MAX}
-            placeholder="Ex: Amor da minha existência 💗"
+            placeholder={data.variant === 'biblico' ? 'Ex: Onde tu ires, eu irei 🕊️' : 'Ex: Amor da minha existência 💗'}
             className="w-full outline-none text-[15px] text-gray-800 resize-none placeholder-gray-300 p-4 bg-transparent leading-relaxed"
             value={data.title}
             onChange={e => update({ title: e.target.value })}
           />
           <div className="flex items-center gap-3 px-4 pb-3 border-t border-gray-100 pt-3">
-            <button onClick={() => update({ title: randomTitle() })}
+            <button onClick={() => update({ title: data.variant === 'biblico' ? randomBiblicalTitle() : randomTitle() })}
               className="flex items-center gap-1.5 text-[13px] text-purple-600 font-semibold active:scale-95 transition-all">
               <Shuffle size={13} /> Gerar Aleatório
             </button>

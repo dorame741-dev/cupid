@@ -97,6 +97,45 @@ export function randomTitle() {
   return titles[Math.floor(Math.random() * titles.length)]
 }
 
+export const biblicalTitles = [
+  'Onde tu ires, eu irei 🕊️',
+  'Dois que Deus uniu 💙',
+  'Bênção que Deus me deu 🙏',
+  'Juntos na fé e no amor ✝️',
+  'Nosso amor vem do céu 💙',
+  'Abençoados e apaixonados',
+  'Deus escolheu você pra mim',
+  'Amor que não falha nunca 💙',
+  'Com Deus tudo faz sentido',
+  'O amor tudo suporta ✝️',
+  'Caminhando juntos na fé 🕊️',
+  'Minha bênção mais especial',
+  'Dois corações, uma missão',
+  'Prometemos diante de Deus',
+  'Nossa aliança é eterna 🕊️',
+  'Nosso lar tem Deus no centro',
+  'Amor sagrado e verdadeiro',
+  'Ele nos uniu pra sempre 💙',
+  'Minha bênção de Deus 🙏',
+  'Família abençoada por Deus',
+  'Com fé, amor e gratidão 🙏',
+  'Escolhidos por Deus 💫',
+  'Amor paciente e bondoso ✝️',
+  'Deus escreveu essa história',
+  'Unidos pela graça de Deus',
+  'Amor que edifica e fortalece',
+  'Nossa história com Deus 💙',
+  'Juntos seguindo a Deus 🌟',
+  'Somos aliança de Deus 💙',
+  'Deus é o centro do nosso amor',
+  'Unidos por Deus pra sempre',
+  'Meu companheiro(a) de fé 🙏',
+]
+
+export function randomBiblicalTitle() {
+  return biblicalTitles[Math.floor(Math.random() * biblicalTitles.length)]
+}
+
 export function randomMessage() {
   return messages[Math.floor(Math.random() * messages.length)]
 }
