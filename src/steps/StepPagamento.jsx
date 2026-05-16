@@ -349,8 +349,9 @@ export default function StepPagamento({ onNext, onBack }) {
   const isEditMode  = Boolean(data.__editPhone)
   const editPhone   = data.__editPhone || ''
   const partnerName = data.partnerName || 'ela'
+  const demoSlug    = data.variant === 'biblico' ? 'demo-biblico' : 'demo'
   const siteUrl     = isDemoMode
-    ? `${window.location.origin}/demo`
+    ? `${window.location.origin}/${demoSlug}`
     : isEditMode ? `${window.location.origin}/${editPhone}`
     : waValid ? `${window.location.origin}/${digits}` : ''
 
@@ -525,9 +526,9 @@ export default function StepPagamento({ onNext, onBack }) {
             setScreen('loading')
             try {
               const quizData = await buildQuizData()
-              await saveSite('demo', quizData)
-              await markPaid('demo').catch(() => {})
-              window.location.href = '/obrigado/demo'
+              await saveSite(demoSlug, quizData)
+              await markPaid(demoSlug).catch(() => {})
+              window.location.href = `/obrigado/${demoSlug}`
             } catch {
               setErrMsg('Erro ao salvar demonstração. Verifique o Supabase.')
               setScreen('error')
