@@ -590,7 +590,7 @@ function GenericGameView({ gameId, onClose }) {
   const def = GAME_DEFS.find(g => g.id === gameId)
   return (
     <div style={{ position:'fixed', inset:0, zIndex:200, background:def?.bg||'#111', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
-      <span style={{ fontSize:72 }}>{def?.icon}</span>
+      <div style={{ marginBottom:8 }}><GameMockup id={gameId} accent={def?.accent||'#fff'} /></div>
       <p style={{ color:'white', fontWeight:900, fontSize:22 }}>{def?.label}</p>
       <p style={{ color:'rgba(255,255,255,0.5)', fontSize:14, textAlign:'center', padding:'0 32px', lineHeight:1.6 }}>
         Esta seção está disponível no Wrapped do seu presente.
