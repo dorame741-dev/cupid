@@ -20,6 +20,7 @@ import StepTimeline from './steps/StepTimeline'
 import StepEstrelas from './steps/StepEstrelas'
 import StepPagamento from './steps/StepPagamento'
 import SitePreview from './components/SitePreview'
+import SitePreviewBiblico from './components/SitePreviewBiblico'
 import './index.css'
 
 const STEPS = [
@@ -78,7 +79,7 @@ function AppContent() {
         {step === 'step-timeline' && <StepTimeline onNext={afterTimeline} onBack={() => sel.includes('words') ? skipTo('step-jogo') : sel.includes('gallery') ? skipTo('step-galeria') : sel.includes('map') ? skipTo('step-mapa') : sel.includes('roulette') ? skipTo('step-roleta') : skipTo('step-wrapped')} />}
         {step === 'step-estrelas' && <StepEstrelas onNext={() => skipTo('step-pagamento')} onBack={() => sel.includes('timeline') ? skipTo('step-timeline') : sel.includes('words') ? skipTo('step-jogo') : sel.includes('gallery') ? skipTo('step-galeria') : sel.includes('map') ? skipTo('step-mapa') : sel.includes('roulette') ? skipTo('step-roleta') : skipTo('step-wrapped')} />}
         {step === 'step-pagamento' && <StepPagamento onNext={() => skipTo('final-preview')} onBack={() => sel.includes('stars') ? skipTo('step-estrelas') : sel.includes('timeline') ? skipTo('step-timeline') : sel.includes('words') ? skipTo('step-jogo') : sel.includes('gallery') ? skipTo('step-galeria') : sel.includes('map') ? skipTo('step-mapa') : sel.includes('roulette') ? skipTo('step-roleta') : skipTo('step-wrapped')} />}
-        {step === 'final-preview' && <SitePreview onBack={back} />}
+        {step === 'final-preview' && (data.variant === 'biblico' ? <SitePreviewBiblico onBack={back} /> : <SitePreview onBack={back} />)}
       </div>
     </div>
   )
@@ -110,9 +111,9 @@ function TikTokLoader() {
   return null
 }
 
-export default function App() {
+export default function App({ variant = 'namorados' }) {
   return (
-    <QuizProvider>
+    <QuizProvider variant={variant}>
       <PixelLoader />
       <TikTokLoader />
       <AppContent />

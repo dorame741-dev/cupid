@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSite } from '../lib/supabase'
 import SitePreview from '../components/SitePreview'
+import SitePreviewBiblico from '../components/SitePreviewBiblico'
 
 export default function SitePage() {
   const { phone } = useParams()
@@ -51,7 +52,9 @@ export default function SitePage() {
   return (
     <div style={{ width: '100%', minHeight: '100vh', background: '#030308', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 430, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <SitePreview externalData={quizData} />
+        {quizData?.variant === 'biblico'
+          ? <SitePreviewBiblico externalData={quizData} />
+          : <SitePreview externalData={quizData} />}
       </div>
 
       {isDemo && (

@@ -9,7 +9,7 @@ const BG_RED2 = 'radial-gradient(ellipse at 60% 40%, rgba(190,18,60,0.5) 0%, tra
 const BG_BLACK = '#030308'
 
 /* ─── Photo carousel ───────────────────────────────────────── */
-function PhotoCarousel({ photos: rawPhotos }) {
+export function PhotoCarousel({ photos: rawPhotos }) {
   const photos = rawPhotos || []
   const [idx, setIdx]         = useState(0)
   const [opacity, setOpacity] = useState(1)
@@ -305,7 +305,7 @@ function MessageCard({ message, audio, onOpen }) {
 }
 
 /* ─── Games hub (Conquistas) ────────────────────────────────── */
-const GAME_DEFS = [
+export const GAME_DEFS = [
   { id: 'roulette', label: 'Roleta',   bg: '#7f1d1d', accent: '#fca5a5' },
   { id: 'words',    label: 'Palavras', bg: '#2e1065', accent: '#c4b5fd' },
   { id: 'gallery',  label: 'Galeria',  bg: '#451a03', accent: '#fcd34d' },
@@ -324,7 +324,7 @@ const CONQUEST_HEARTS = [
   { left: '82%', size: 15, dur:  9, delay: -7  },
 ]
 
-function GameMockup({ id, accent }) {
+export function GameMockup({ id, accent }) {
   if (id === 'roulette') return (
     <svg width="34" height="34" viewBox="0 0 44 44">
       {[0,1,2,3,4,5].map(i => {

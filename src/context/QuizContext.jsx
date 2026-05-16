@@ -54,8 +54,8 @@ function loadInitialData() {
   return DEFAULT_DATA
 }
 
-export function QuizProvider({ children }) {
-  const [data, setData] = useState(loadInitialData)
+export function QuizProvider({ children, variant = 'namorados' }) {
+  const [data, setData] = useState(() => ({ ...loadInitialData(), variant }))
 
   const update = (fields) => setData(prev => ({ ...prev, ...fields }))
 
