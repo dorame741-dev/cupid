@@ -58,11 +58,7 @@ export default function CitySearch({ value, onChange }) {
       <label className="bg-white rounded-2xl px-4 py-4 shadow-sm flex items-center gap-3 border-2 border-transparent focus-within:border-purple-300 transition-colors cursor-text">
         <MapPin
           size={20}
-          style={{
-            color: query.trim() ? '#7C3AED' : '#6B7280',
-            transition: 'color 0.2s',
-            flexShrink: 0,
-          }}
+          className={`shrink-0 transition-colors ${query.trim() ? 'text-purple-600' : 'text-gray-500'}`}
         />
         <input
           type="text"
