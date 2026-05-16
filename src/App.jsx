@@ -58,8 +58,10 @@ function AppContent() {
   const afterJogo     = () => nextStep('words')
   const afterTimeline = () => nextStep('timeline')
 
+  const isBiblico = data.variant === 'biblico'
+
   return (
-    <div className="phone-shell">
+    <div className={`phone-shell${isBiblico ? ' theme-biblico' : ''}`}>
       {step !== 'final-preview' && <TopBanner />}
       <div className="phone-content">
         {step === 'intro-names'   && <StepIntroNames onNext={next} />}

@@ -1192,12 +1192,12 @@ function QuizView() {
       id: 'biblico',
       emoji: '✝️',
       name: 'Temática Bíblica',
-      sub: 'Em desenvolvimento',
+      sub: 'Cupid Cristão',
       desc: 'Variação com textos bíblicos, paleta exclusiva e seções personalizadas para presentes cristãos.',
       quizUrl: `${origin}/biblico`,
       editUrl: `${origin}/edit-biblico/{telefone}`,
       color: C.amber,
-      status: 'soon',
+      status: 'active',
     },
   ]
 
