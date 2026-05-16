@@ -54,25 +54,7 @@ export function PhotoCarousel({ photos: rawPhotos }) {
       onTouchEnd={handleTap}
       onClick={handleTap}
     >
-      {/* story bars */}
-      {!isDefault && photos.length > 1 && (
-        <div style={{ position: 'absolute', top: 10, left: 10, right: 10, display: 'flex', gap: 4, zIndex: 20 }}>
-          {photos.map((_, i) => (
-            <div key={i} style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' }}>
-              <div
-                key={`fill-${idx}-${i}`}
-                style={{
-                  height: '100%', background: 'white', borderRadius: 2,
-                  width: i < idx ? '100%' : '0%',
-                  ...(i === idx ? { animation: 'storyFill 10s linear forwards' } : {}),
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <img src={allPhotos[idx]?.preview} alt="" aria-hidden
+<img src={allPhotos[idx]?.preview} alt="" aria-hidden
         className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl brightness-40 pointer-events-none" />
       <img src={allPhotos[idx]?.preview} alt="Foto do casal"
         className="relative z-10 w-full h-full object-cover pointer-events-none"
