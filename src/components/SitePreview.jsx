@@ -645,7 +645,14 @@ function ConquistasSection({ data }) {
             <button onClick={() => setOpenGame(available[Math.floor(Math.random() * available.length)].id)}
               style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(139,92,246,0.2)', border:'1px solid rgba(139,92,246,0.35)', borderRadius:20, padding:'6px 12px', cursor:'pointer' }}>
               <span style={{ fontSize:11, fontWeight:700, color:'#c4b5fd' }}>SORTEAR</span>
-              <span style={{ fontSize:14 }}>🎲</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" style={{ flexShrink:0 }}>
+                <rect x="0.5" y="0.5" width="15" height="15" rx="3.5" fill="#c4b5fd" opacity="0.9"/>
+                <circle cx="4.5" cy="4.5" r="1.4" fill="#1e1b4b"/>
+                <circle cx="11.5" cy="4.5" r="1.4" fill="#1e1b4b"/>
+                <circle cx="8"    cy="8"   r="1.4" fill="#1e1b4b"/>
+                <circle cx="4.5" cy="11.5" r="1.4" fill="#1e1b4b"/>
+                <circle cx="11.5" cy="11.5" r="1.4" fill="#1e1b4b"/>
+              </svg>
             </button>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(available.length, 3)}, 1fr)`, gap:8 }}>
