@@ -1,225 +1,151 @@
-# Contexto do Projeto — Dia dos Namorados Quiz Builder
+# Contexto de Sessão — Alterações de UI/Visual
 
-## O que é esse projeto
-
-Aplicativo web mobile-first que funciona como um **quiz interativo de presente**. O usuário (quem compra) preenche etapas de configuração e no final gera um site personalizado para o casal. Tecnologias: **React 19 + Vite + Tailwind v4 + Supabase + YouTube IFrame API**.
-
-Localização: `Z:\projetos pra test\dia dos namorados`
+> **Documentação principal do projeto:** leia `PROJETO.md` primeiro.
+> Este arquivo cobre apenas as mudanças visuais feitas nas sessões de Claude Code.
 
 ---
 
-## Estrutura de pastas relevante
+## Deploy rápido
 
+```bash
+cd "Z:\projetos pra test\dia dos namorados"
+git add .
+git commit -m "descrição"
+git push origin main   # dispara deploy automático na Vercel
 ```
-src/
-  App.jsx                     — Orquestra os steps, fluxo de navegação
-  index.css                   — CSS global (phone-shell, step-root, step-scroll, step-bottom, btn-pulse)
-  context/
-    QuizContext.jsx            — Estado global de todos os dados do quiz
-  components/
-    PandaMascot.jsx            — Logo cupido (PNG de /public/cupido.png), size=230
-    PreviewFab.jsx             — Botão flutuante roxo "Pré-visualizar" (absolute bottom-32 right-4)
-    BackButton.jsx             — Botão ‹ Voltar dos steps de configuração
-    TopBanner.jsx              — Banner do topo (texto 15px)
-    SitePreview.jsx            — Preview completo do site final do casal
-    LiveCounter.jsx            — Contador de tempo do casal em tempo real
-    CitySearch.jsx             — Campo de busca de cidade (Nominatim API)
-  steps/
-    StepIntroNames.jsx         — Etapa 1: nomes do casal
-    StepIntroDate.jsx          — Etapa 2: data e horário do início do relacionamento
-    Step1Title.jsx             — Título do site
-    Step2Music.jsx             — Busca e escolha da música (YouTube API)
-    Step3Photos.jsx            — Upload de fotos do casal
-    Step4Message.jsx           — Mensagem especial
-    Step5CoverPhoto.jsx        — Foto de capa
-    Step6CounterTexts.jsx      — Textos do contador (edição inline com lápis)
-    StepUpsell.jsx             — Página de upsell (Retrospectiva Wrapped)
-    StepWrapped.jsx            — Seleção das seções extras (6 cards visíveis direto)
-    StepRoleta.jsx             — Configuração + preview da Roleta Surpresa
-    StepMapa.jsx               — Configuração + preview da Jornada no Mapa
-    StepGaleria.jsx            — Configuração + preview da Galeria de Imagens
-    StepJogoPalavra.jsx        — Configuração + preview do Jogo de Palavras (Wordle)
-    StepTimeline.jsx           — Configuração + preview da Linha do Tempo
-    StepEstrelas.jsx           — Configuração + preview do Mapa das Estrelas
-    StepPagamento.jsx          — Tela de pagamento PIX (API PushinPay)
-  lib/
-    youtube.js                 — searchMusic(), loadYTAPI(), DEFAULT_SONGS
-public/
-  cupido.png                   — Logo do app (anjo cupido gerado por IA, fundo removido)
-```
+
+- **Repo:** github.com/obrsinbrs-afk/cupid
+- **Branch:** main
+- **Vercel:** conectado ao GitHub, deploy automático no push
 
 ---
 
-## Fluxo de navegação (App.jsx)
+## Mudanças visuais da sessão
 
-```
-intro-names → intro-date → step1-title → step2-music → step3-photos →
-step4-message → step5-cover → step6-counter → upsell → step-wrapped →
-[seções escolhidas na ordem: roulette, map, gallery, words, timeline, stars] →
-step-pagamento → final-preview
-```
-
----
-
-## Padrões visuais estabelecidos
-
-### Layout dos steps de configuração
-- `.step-root` — flex column, `position: relative`, fundo branco
-- `.step-scroll` — área rolável (flex: 1, overflow-y: auto)
-- `.step-bottom` — barra fixa no rodapé com botões Voltar/Próximo
-- Fundo branco em TODOS os steps de configuração
-
-### Logo (Cupido)
-- Componente `PandaMascot` renderiza `/public/cupido.png`
+### Logo / Mascote
+- Panda substituído por **Cupido PNG** (`/public/cupido.png`)
+- Componente: `src/components/PandaMascot.jsx` — só renderiza a imagem
 - Tamanho padrão: `size={230}` em todos os steps
-- Wrapper: `style={{ marginTop: -60, marginBottom: -38 }}` (compensa padding transparente do PNG)
-- Na etapa de data: `marginTop: -90`
+- Wrapper com margens negativas para compensar padding transparente do PNG:
+  - Steps normais: `marginTop: -60, marginBottom: -38`
+  - StepIntroDate: `marginTop: -90`
 
-### Botão Pré-visualizar (PreviewFab)
-- Componente: `src/components/PreviewFab.jsx`
-- Estilo: botão roxo flutuante, `absolute bottom-32 right-4`, ícone Eye + texto "Pré-visualizar"
-- Tamanho: `text-[15px]`, padding `pl-4 pr-5 py-3`, ícone size=17
-- Usado em TODOS os steps de configuração que têm preview
+### Fundo dos steps de configuração
+- `src/index.css` → `.step-root { background: #ffffff }` — tudo branco
+- Desktop: `.phone-shell { height: calc(100vh - 96px) }` — altura fixa para scroll interno funcionar
 
-### Botão Voltar nos previews (telas escuras de pré-visualização)
-- Todos os previews internos (StepRoleta, StepEstrelas, StepTimeline, StepGaleria, StepJogoPalavra) têm:
-  ```jsx
-  <button onClick={onClose}
-    className="absolute bottom-4 right-4 bg-purple-600 text-white rounded-full px-5 py-2.5 font-semibold text-[14px] active:scale-95 transition-all z-10">
-    Voltar
-  </button>
-  ```
-- No `SitePreview` (preview geral): botão Voltar num `shrink-0` footer no rodapé (sempre visível), com efeito `btn-pulse`
+### Botão flutuante Pré-visualizar (`PreviewFab`)
+- Arquivo: `src/components/PreviewFab.jsx`
+- Estilo: `absolute bottom-32 right-4`, roxo, `text-[15px]`, ícone Eye size=17
+- Presente em **todos** os steps de configuração que têm preview
 
-### Efeito btn-pulse
-- Definido em `index.css`: animação de `box-shadow` roxo pulsando a cada 2s
-- Usado no botão Voltar do SitePreview e em alguns CTAs
+### Botão Voltar nos previews internos (telas escuras)
+Padrão adotado em: StepRoleta, StepEstrelas, StepTimeline, StepGaleria, StepJogoPalavra:
+```jsx
+<button onClick={onClose}
+  className="absolute bottom-4 right-4 bg-purple-600 text-white rounded-full px-5 py-2.5 font-semibold text-[14px] active:scale-95 transition-all z-10">
+  Voltar
+</button>
+```
 
----
+### SitePreview (`src/components/SitePreview.jsx`)
+- Raiz: `flex-1 flex flex-col` (não `h-full`) — necessário para o footer fixo funcionar no desktop
+- **Header:** fundo preto (`BG_BLACK`), sem botão Voltar no topo
+- **Thumbnail da música removida** — só nome (`text-[15px]`) e artista (`text-[13px]`) à esquerda
+- **Botão Voltar:** `shrink-0` footer roxo com `btn-pulse`, sempre visível fora do scroll
+- `ChevronLeft` **deve permanecer no import** — usado no `MessageFull` (tela de mensagem)
 
-## Componentes de formulário
+### StepWrapped (`src/steps/StepWrapped.jsx`)
+- Todas as 6 seções aparecem direto no grid (sem botão "Ver mais")
+- Cards usam screenshots reais de `/public/screenshots/` como fundo
 
-### StepIntroNames
-- Fundo branco, sem efeito 3D
-- Ícones (presente ♁ e coração ♥) ficam cinza e viram roxo ao digitar
-- Borda dos campos: cinza → roxo ao focar/preencher
+### Step6CounterTexts — lápis de edição
+- Ícone `Pencil` sempre visível: `opacity-60` (não depende de hover)
+- Lápis duplicado externo ao "Sobre o casal" foi removido
 
-### StepIntroDate
-- Sem quadrado wrapper nos ícones (Calendar, Clock)
-- MapPin no CitySearch: cinza → roxo ao digitar
-- Cupido com `marginTop: -90`
-
-### Step6CounterTexts (Textos do Contador)
-- Edição inline com `InlineEdit` component
-- Lápis sempre visível (`opacity-60`), não depende de hover
-
-### StepWrapped (Seleção de seções)
-- **Todas as 6 seções aparecem direto** no grid 2×3 (sem botão "Ver mais")
-- Seções: Linha do Tempo, Mapa das Estrelas, Galeria, Jogo de Palavras, Jornada no Mapa, Roleta Surpresa
-
----
-
-## SitePreview — Preview do site final
-
-Arquivo: `src/components/SitePreview.jsx`
-
-### Estrutura da tela
-1. **Header preto** — apenas título do site centralizado (sem botão Voltar no topo)
-2. **Zona vermelha** — carrossel de fotos + player de música
-3. **Zona preta** — "Sobre o casal" com foto de capa + contador
-4. **Mensagem especial** — card vermelho com botão "Mostrar Mensagem"
-5. **Zona vermelha 2** — conquistas + retrospectiva
-6. **Footer fixo** — botão Voltar roxo com `btn-pulse` (sempre visível, fora do scroll)
-
-### Player de música
-- Usa YouTube IFrame API (player invisível)
-- Thumbnail do álbum **removida** — só mostra nome da música (esquerda, `text-[15px]`) e artista (`text-[13px]`)
-- Músicas padrão em `lib/youtube.js`: All of Me, A Thousand Years, Perfect
-- Para busca funcionar: precisa de `VITE_YOUTUBE_API_KEY` no `.env`
-
-### MessageFull (tela de mensagem)
-- Usa `ChevronLeft` do lucide-react — **não remover do import**
-- Fundo vermelho, texto em fonte cursiva
-- Botão fechar no topo esquerdo
-
----
-
-## Pagamento (StepPagamento)
-
-Arquivo: `src/steps/StepPagamento.jsx`
-
-- API: **PushinPay** (apenas PIX)
-- Token: `VITE_PUSHINPAY_TOKEN` no `.env`
-- Proxy Vite: `/pushinpay` → `https://api.pushinpay.com.br` (evita CORS em dev)
-- Valor base: R$ 19,90
-- QR personalizado (+R$ 4,90): 3 templates visuais
-- 4 telas: `form → loading → awaiting → success`
-- Polling a cada 3s para verificar pagamento
-- WhatsApp com máscara `(XX) XXXXX-XXXX`
-
----
-
-## Roleta (StepRoleta) — Preview
-
-Ao girar e parar, exibe o resultado:
+### StepRoleta — resultado ao parar
+Após a roleta parar (4.2s), calcula e exibe:
 ```
 O resultado foi
 [NOME DA OPÇÃO]
 ```
-- Cálculo da fatia vencedora usa ângulo de rotação final
-- O card de resultado aparece após 4.2s (tempo da animação)
-- Zera o resultado ao girar novamente
+Fórmula do índice vencedor:
+```js
+const sliceAngle = 360 / n
+const normalized = ((finalRotation % 360) + 360) % 360
+const pointerOnWheel = (360 - normalized) % 360
+const adjusted = (pointerOnWheel + sliceAngle / 2) % 360
+const winner = options[Math.floor(adjusted / sliceAngle) % n]
+```
+
+### StepIntroNames
+- Sem efeito 3D, bordas simples: cinza → roxo ao focar/preencher
+- Ícones (presente/coração): cinza → roxo ao digitar
+
+### StepIntroDate
+- Sem quadrado wrapper nos ícones (Calendar, Clock direto)
+- MapPin (CitySearch): cinza → roxo ao digitar
+
+### TopBanner
+- Todos os textos em `text-[15px]`
+
+### Lápis (Pencil)
+- Emoji ✏️ substituído por ícone lucide `<Pencil>` em: Step1Title, Step2Music, Step3Photos, Step4Message, Step5CoverPhoto, Step6CounterTexts
 
 ---
 
-## CSS global relevante (index.css)
+## Padrões de CSS (index.css)
 
 ```css
-/* Desktop: phone shell com altura fixa para scroll interno funcionar */
-@media (min-width: 640px) {
-  .phone-shell {
-    height: calc(100vh - 96px); /* 32px top + 64px bottom do body padding */
-  }
+.step-root   { flex:1; flex-direction:column; background:#fff; overflow:hidden; position:relative }
+.step-scroll { flex:1; overflow-y:auto; padding:16px 20px 0 }
+.step-bottom { background:white; border-top:...; padding:12px 20px 28px }
+
+@keyframes btn-glow {
+  0%,100% { box-shadow: 0 8px 24px rgba(124,58,237,0.45) }
+  50%     { box-shadow: 0 8px 40px rgba(124,58,237,0.75), 0 0 0 6px rgba(124,58,237,0.12) }
 }
+.btn-pulse { animation: btn-glow 2s ease-in-out infinite }
 
-/* Animação de botão CTA */
-@keyframes btn-glow { ... }
-.btn-pulse { animation: btn-glow 2s ease-in-out infinite; }
+/* Desktop — phone shell altura fixa para scroll interno */
+@media (min-width:640px) {
+  .phone-shell { height: calc(100vh - 96px) }
+}
 ```
 
 ---
 
-## Variáveis de ambiente necessárias (.env)
+## Estrutura de arquivos relevante
 
-```env
-VITE_YOUTUBE_API_KEY=sua_chave_aqui
-VITE_PUSHINPAY_TOKEN=seu_token_aqui
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
 ```
-
----
-
-## Onde paramos
-
-Todas as funcionalidades principais estão implementadas e funcionando:
-
-- ✅ Todos os steps de configuração (nomes, data, título, música, fotos, mensagem, capa, contador)
-- ✅ Seleção de seções extras (Wrapped)
-- ✅ Configuração de todas as 6 seções: Roleta, Mapa, Galeria, Jogo, Timeline, Estrelas
-- ✅ Pagamento PIX com PushinPay
-- ✅ Preview geral do site (SitePreview) com player de música YouTube
-- ✅ Logo Cupido em todos os steps (size=230)
-- ✅ Fundo branco em todos os steps de configuração
-- ✅ PreviewFab (botão flutuante Pré-visualizar) em todos os steps
-- ✅ Botão Voltar fixo (canto inferior direito) em todos os previews internos
-- ✅ Resultado da Roleta exibido ao parar
-- ✅ Lápis sempre visível no Step6CounterTexts
-- ✅ StepWrapped mostra todas as 6 seções sem "ver mais"
-- ✅ SitePreview: header preto, Voltar no footer com pulse, música sem thumbnail
-
-### Possíveis próximos passos
-- Integração com Supabase para salvar/publicar o site do casal
-- Tela final (`final-preview`) — página que o casal recebe
-- Deploy e configuração do proxy PushinPay em produção (precisa de backend)
-- Testes em dispositivos reais
+src/
+  App.jsx                  — orquestra steps + tracking de funil
+  index.css                — CSS global
+  context/QuizContext.jsx  — estado global do quiz
+  components/
+    PandaMascot.jsx        — logo cupido (img /cupido.png)
+    PreviewFab.jsx         — botão flutuante pré-visualizar
+    BackButton.jsx         — botão ‹ Voltar dos steps
+    TopBanner.jsx          — banner do topo (15px)
+    SitePreview.jsx        — preview completo / site final (aceita externalData prop)
+    LiveCounter.jsx        — contador tempo juntos
+    CitySearch.jsx         — busca de cidades (Nominatim)
+    QRCard.jsx             — 4 templates de QR Code
+  steps/                   — um arquivo por step do quiz
+  pages/                   — SitePage, EditPage, ObrigadoPage, AdminPage, LoginPage
+  lib/
+    supabase.js            — todas as funções do banco
+    youtube.js             — searchMusic, loadYTAPI, DEFAULT_SONGS
+api/                       — Vercel Edge Functions
+  pushinpay.js             — proxy PIX
+  fbcapi.js                — Facebook Conversions API
+  tiktok-events.js         — TikTok Events API
+  cidades.js               — autocomplete cidades BR
+  innertube.js             — proxy busca YouTube
+public/
+  cupido.png               — logo (PNG sem fundo)
+  pix.png                  — logo PIX
+  screenshots/             — screenshots das seções para StepWrapped
+vercel.json                — config de rotas Vercel
+PROJETO.md                 — documentação completa (banco, rotas, APIs, deploy)
+```
