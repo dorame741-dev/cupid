@@ -113,9 +113,9 @@ function TikTokLoader() {
   return null
 }
 
-export default function App({ variant = 'namorados' }) {
+export default function App({ variant = 'namorados', origem = '1' }) {
   return (
-    <QuizProvider variant={variant}>
+    <QuizProvider variant={variant} origem={origem}>
       <PixelLoader />
       <TikTokLoader />
       <AppContent />

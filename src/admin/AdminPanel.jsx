@@ -744,10 +744,16 @@ function PreviewModal({ site, onClose }) {
   )
 }
 
+// De qual página veio o pedido. Sites antigos (sem o campo) contam como página 1.
+function origemDe(site) {
+  return site?.quiz_data?.origem === '2' ? '2' : '1'
+}
+
 /* ── Clients view ───────────────────────────────────────────────── */
 function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFrom, customTo, setCustomTo }) {
   const [search,   setSearch]  = useState('')
   const [filter,   setFilter]  = useState('all')
+  const [pagina,   setPagina]  = useState('all') // 'all' | '1' | '2'
   const [preview,  setPreview]  = useState(null)
   const [qrEdit,   setQrEdit]   = useState(null) // site object for QR edit
   const [sitesState, setSitesState] = useState(sites)
@@ -759,7 +765,8 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
     const name     = `${s.quiz_data?.myName||''} ${s.quiz_data?.partnerName||''}`.toLowerCase()
     const matchSrc = !q || s.phone.includes(q) || name.includes(q)
     const matchFil = filter==='all' || (filter==='paid' ? s.paid : !s.paid)
-    return matchSrc && matchFil
+    const matchPag = pagina==='all' || origemDe(s)===pagina
+    return matchSrc && matchFil && matchPag
   })
 
   function waLink(phone, accessUrl, editUrl) {
@@ -767,7 +774,7 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
     return `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`
   }
 
-  const COLS = '44px 155px 175px minmax(80px,1fr) 90px auto'
+  const COLS = '44px 155px 175px minmax(80px,1fr) 80px 90px auto'
   const thStyle = { padding:'10px 14px', fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.9, whiteSpace:'nowrap' }
 
   return (
@@ -813,6 +820,35 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
             )
           })}
         </div>
+        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+          <span style={{ fontSize:11, color:C.muted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8 }}>Página</span>
+          {[
+            { p:'all', label:'Todas' },
+            { p:'1',   label:'1 ( / )' },
+            { p:'2',   label:'2 ( /2 )' },
+          ].map(({ p, label }) => {
+            const active = pagina===p
+            const base   = p==='all' ? inPeriod : inPeriod.filter(s=>origemDe(s)===p)
+            const vendas = base.filter(s=>s.paid).length
+            const color  = p==='2' ? '#db2777' : '#7c3aed'
+            return (
+              <button key={p} onClick={()=>setPagina(p)} title={`${vendas} venda(s) paga(s) de ${base.length} pedido(s)`} style={{
+                display:'flex', alignItems:'center', gap:7,
+                padding:'8px 14px', borderRadius:10, cursor:'pointer', fontSize:12, fontWeight:700, outline:'none',
+                background: active ? `${color}1f` : 'transparent',
+                color: active ? color : C.muted,
+                border: active ? `1.5px solid ${color}60` : `1.5px solid ${C.border}`,
+                transition:'all 0.15s',
+              }}>
+                {label}
+                <span style={{
+                  background: active ? color : C.border, color: active ? '#fff' : C.muted,
+                  borderRadius:20, fontSize:10, fontWeight:800, padding:'1px 7px', lineHeight:'18px', minWidth:22, textAlign:'center',
+                }}>{vendas}</span>
+              </button>
+            )
+          })}
+        </div>
         <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>{filtered.length} resultado{filtered.length!==1?'s':''}</span>
       </div>
 
@@ -822,7 +858,7 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
           <div style={{ minWidth:980 }}>
             {/* header */}
             <div style={{ display:'grid', gridTemplateColumns:COLS, background:C.bg, borderRadius:'18px 18px 0 0', borderBottom:`1px solid ${C.border}` }}>
-              {['', 'Telefone', 'Casal', 'Título', 'Status', 'Ações'].map(h=>(
+              {['', 'Telefone', 'Casal', 'Título', 'Página', 'Status', 'Ações'].map(h=>(
                 <div key={h} style={thStyle}>{h}</div>
               ))}
             </div>
@@ -866,6 +902,18 @@ function ClientsView({ sites, price, period, setPeriod, customFrom, setCustomFro
                   {/* title */}
                   <div style={{ padding:'11px 14px' }}>
                     <p style={{ margin:0, fontSize:12, color:C.muted, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{qd.title||'—'}</p>
+                  </div>
+                  {/* página de origem */}
+                  <div style={{ padding:'11px 14px' }}>
+                    {(() => {
+                      const o = origemDe(site)
+                      const color = o==='2' ? '#db2777' : '#7c3aed'
+                      return (
+                        <span title={o==='2' ? 'Veio da página /2' : 'Veio da página /'} style={{ fontSize:11, fontWeight:800, padding:'4px 10px', borderRadius:20, display:'inline-block', background:`${color}18`, color, border:`1px solid ${color}35` }}>
+                          {o==='2' ? '/2' : '/'}
+                        </span>
+                      )
+                    })()}
                   </div>
                   {/* status */}
                   <div style={{ padding:'11px 14px' }}>

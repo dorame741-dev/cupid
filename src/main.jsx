@@ -15,6 +15,7 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
+        <Route path="/2" element={<App origem="2" />} />
         <Route path="/biblico" element={<App variant="biblico" />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />

@@ -54,8 +54,13 @@ function loadInitialData() {
   return DEFAULT_DATA
 }
 
-export function QuizProvider({ children, variant = 'namorados' }) {
-  const [data, setData] = useState(() => ({ ...loadInitialData(), variant }))
+// origem = de qual página a venda veio ('1' = /, '2' = /2).
+// Em modo edição mantém a origem já salva no site.
+export function QuizProvider({ children, variant = 'namorados', origem = '1' }) {
+  const [data, setData] = useState(() => {
+    const init = loadInitialData()
+    return { ...init, variant, origem: init.origem || origem }
+  })
 
   const update = (fields) => setData(prev => ({ ...prev, ...fields }))
 
